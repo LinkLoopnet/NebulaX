@@ -7,6 +7,8 @@ local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
 
 -- Create ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
@@ -19,6 +21,18 @@ ScreenGui.ResetOnSpawn = false
 local menuOpen = false
 local dragging = false
 local dragInput, dragStart, startPos
+
+-- Aimbot variables
+local aimbotEnabled = false
+let selectedTarget = nil
+local aimbotConnection = nil
+
+-- FOV Circle variables
+local fovCircle = nil
+local fovEnabled = false
+local fovSize = 150
+local fovColor = Color3.fromRGB(0, 255, 255)
+local fovVisible = true
 
 -- Configuration
 local config = {
@@ -34,8 +48,8 @@ local config = {
 -- Main Window
 local MainWindow = Instance.new("Frame")
 MainWindow.Name = "MainWindow"
-MainWindow.Size = UDim2.new(0, 800, 0, 500)
-MainWindow.Position = UDim2.new(0.5, -400, 0.5, -250)
+MainWindow.Size = UDim2.new(0, 800, 0, 550)
+MainWindow.Position = UDim2.new(0.5, -400, 0.5, -275)
 MainWindow.BackgroundColor3 = config.theme.primary
 MainWindow.BackgroundTransparency = 0.1
 MainWindow.BorderSizePixel = 0
@@ -79,9 +93,9 @@ Title.Name = "Title"
 Title.Size = UDim2.new(0, 200, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "NebulaX v0.1"
+Title.Text = "NebulaX v0.1 - South London RP"
 Title.TextColor3 = config.theme.accent
-Title.TextSize = 18
+Title.TextSize = 16
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Font = Enum.Font.GothamBold
 Title.Parent = TitleBar
@@ -318,7 +332,7 @@ function NebulaX:CreateSlider(parent, name, min, max, default, callback)
     end)
 end
 
--- Function to create dropdown
+-- Function to create dropdown with dynamic player list
 function NebulaX:CreateDropdown(parent, name, options, default, callback)
     local yPos = #parent:GetChildren() * 35
     
@@ -361,7 +375,165 @@ function NebulaX:CreateDropdown(parent, name, options, default, callback)
     UICorner2.CornerRadius = UDim.new(0, 4)
     UICorner2.Parent = DropdownButton
     
+    -- Create dropdown menu
+    local DropdownMenu = Instance.new("Frame")
+    DropdownMenu.Name = "DropdownMenu"
+    DropdownMenu.Size = UDim2.new(0.5, -10, 0, 0)
+    DropdownMenu.Position = UDim2.new(0.5, 0, 1, 5)
+    DropdownMenu.BackgroundColor3 = config.theme.secondary
+    DropdownMenu.BackgroundTransparency = 0.1
+    DropdownMenu.BorderSizePixel = 0
+    DropdownMenu.Visible = false
+    DropdownMenu.Parent = DropdownFrame
+    DropdownMenu.ZIndex = 10
+    
+    local UICorner3 = Instance.new("UICorner")
+    UICorner3.CornerRadius = UDim.new(0, 4)
+    UICorner3.Parent = DropdownMenu
+    
+    local DropdownList = Instance.new("ScrollingFrame")
+    DropdownList.Name = "DropdownList"
+    DropdownList.Size = UDim2.new(1, 0, 1, 0)
+    DropdownList.BackgroundTransparency = 1
+    DropdownList.BorderSizePixel = 0
+    DropdownList.ScrollBarThickness = 3
+    DropdownList.CanvasSize = UDim2.new(0, 0, 0, 0)
+    DropdownList.Parent = DropdownMenu
+    
+    local function updatePlayerList()
+        -- Clear existing items
+        for _, child in ipairs(DropdownList:GetChildren()) do
+            if child:IsA("TextButton") then
+                child:Destroy()
+            end
+        end
+        
+        -- Get current players
+        local players = {}
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                table.insert(players, player.Name)
+            end
+        end
+        
+        -- Create buttons for each player
+        for i, playerName in ipairs(players) do
+            local PlayerButton = Instance.new("TextButton")
+            PlayerButton.Name = playerName
+            PlayerButton.Size = UDim2.new(1, -10, 0, 25)
+            PlayerButton.Position = UDim2.new(0, 5, 0, (i-1) * 25)
+            PlayerButton.BackgroundColor3 = config.theme.highlight
+            PlayerButton.BackgroundTransparency = 0.3
+            PlayerButton.Text = playerName
+            PlayerButton.TextColor3 = config.theme.text
+            PlayerButton.TextSize = 12
+            PlayerButton.Font = Enum.Font.Gotham
+            PlayerButton.Parent = DropdownList
+            PlayerButton.ZIndex = 11
+            
+            local UICorner = Instance.new("UICorner")
+            UICorner.CornerRadius = UDim.new(0, 2)
+            UICorner.Parent = PlayerButton
+            
+            PlayerButton.MouseButton1Click:Connect(function()
+                DropdownButton.Text = playerName
+                DropdownMenu.Visible = false
+                if callback then callback(playerName) end
+            end)
+            
+            PlayerButton.MouseEnter:Connect(function()
+                PlayerButton.BackgroundTransparency = 0
+            end)
+            
+            PlayerButton.MouseLeave:Connect(function()
+                PlayerButton.BackgroundTransparency = 0.3
+            end)
+        end
+        
+        DropdownList.CanvasSize = UDim2.new(0, 0, 0, #players * 25)
+        DropdownMenu.Size = UDim2.new(0.5, -10, 0, math.min(#players * 25, 150))
+    end
+    
+    -- Toggle dropdown
+    DropdownButton.MouseButton1Click:Connect(function()
+        updatePlayerList()
+        DropdownMenu.Visible = not DropdownMenu.Visible
+    end)
+    
+    -- Update player list when players join/leave
+    Players.PlayerAdded:Connect(updatePlayerList)
+    Players.PlayerRemoving:Connect(updatePlayerList)
+    
     return DropdownFrame
+end
+
+-- Create FOV Circle
+local function createFOVCircle()
+    if fovCircle then
+        fovCircle:Destroy()
+    end
+    
+    fovCircle = Drawing.new("Circle")
+    fovCircle.Visible = fovVisible
+    fovCircle.Radius = fovSize
+    fovCircle.Color = fovColor
+    fovCircle.Thickness = 2
+    fovCircle.NumSides = 60
+    fovCircle.Filled = false
+    fovCircle.Transparency = 1
+    fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    
+    -- Update FOV circle position
+    RunService.RenderStepped:Connect(function()
+        if fovCircle and fovVisible and fovEnabled then
+            fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+            fovCircle.Radius = fovSize
+            fovCircle.Color = fovColor
+        elseif fovCircle then
+            fovCircle.Visible = false
+        end
+    end)
+end
+
+-- Aimbot function - locks onto head
+local function enableAimbot(state)
+    aimbotEnabled = state
+    
+    if aimbotConnection then
+        aimbotConnection:Disconnect()
+        aimbotConnection = nil
+    end
+    
+    if state then
+        aimbotConnection = RunService.RenderStepped:Connect(function()
+            if not aimbotEnabled then return end
+            
+            local closestPlayer = nil
+            local shortestDistance = fovSize
+            
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                    local head = player.Character.Head
+                    local headPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                    
+                    if onScreen then
+                        local mousePos = UserInputService:GetMouseLocation()
+                        local distance = (Vector2.new(headPos.X, headPos.Y) - mousePos).Magnitude
+                        
+                        if distance < shortestDistance then
+                            shortestDistance = distance
+                            closestPlayer = player
+                        end
+                    end
+                end
+            end
+            
+            if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild("Head") then
+                local head = closestPlayer.Character.Head
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, head.Position)
+            end
+        end)
+    end
 end
 
 -- Create all category buttons and their content
@@ -374,8 +546,6 @@ local categories = {
     "Farming"
 }
 
-local currentTab = nil
-
 -- Combat Tab
 local CombatTab = Instance.new("Frame")
 CombatTab.Name = "CombatTab"
@@ -385,7 +555,8 @@ CombatTab.BackgroundTransparency = 1
 CombatTab.Visible = false
 CombatTab.Parent = ContentFrame
 
-NebulaX:CreateToggle(CombatTab, "Aimbot", false, function(state)
+NebulaX:CreateToggle(CombatTab, "Aimbot (Head Lock)", false, function(state)
+    enableAimbot(state)
     print("Aimbot:", state)
 end)
 
@@ -448,14 +619,22 @@ FOVTab.Visible = false
 FOVTab.Parent = ContentFrame
 
 NebulaX:CreateToggle(FOVTab, "FOV Circle", false, function(state)
+    fovEnabled = state
+    if fovCircle then
+        fovCircle.Visible = state and fovVisible
+    end
     print("FOV Circle:", state)
 end)
 
-NebulaX:CreateSlider(FOVTab, "FOV Size", 50, 500, 150, function(value)
+NebulaX:CreateSlider(FOVTab, "FOV Size", 50, 500, fovSize, function(value)
+    fovSize = value
+    if fovCircle then
+        fovCircle.Radius = value
+    end
     print("FOV Size:", value)
 end)
 
--- Color picker placeholder
+-- Color picker for FOV
 local ColorFrame = Instance.new("Frame")
 ColorFrame.Name = "ColorFrame"
 ColorFrame.Size = UDim2.new(1, -20, 0, 30)
@@ -482,14 +661,54 @@ Label.Parent = ColorFrame
 local ColorPreview = Instance.new("Frame")
 ColorPreview.Size = UDim2.new(0, 30, 0, 20)
 ColorPreview.Position = UDim2.new(1, -40, 0.5, -10)
-ColorPreview.BackgroundColor3 = config.theme.accent
+ColorPreview.BackgroundColor3 = fovColor
 ColorPreview.Parent = ColorFrame
 
 local UICorner2 = Instance.new("UICorner")
 UICorner2.CornerRadius = UDim.new(0, 4)
 UICorner2.Parent = ColorPreview
 
+-- Color picker button
+local ColorPicker = Instance.new("TextButton")
+ColorPicker.Size = UDim2.new(1, 0, 1, 0)
+ColorPicker.BackgroundTransparency = 1
+ColorPicker.Text = ""
+ColorPicker.Parent = ColorFrame
+
+ColorPicker.MouseButton1Click:Connect(function()
+    -- Simple color cycling for demonstration
+    local colors = {
+        Color3.fromRGB(255, 0, 0),    -- Red
+        Color3.fromRGB(0, 255, 0),    -- Green
+        Color3.fromRGB(0, 255, 255),  -- Cyan
+        Color3.fromRGB(255, 255, 0),  -- Yellow
+        Color3.fromRGB(255, 0, 255)   -- Magenta
+    }
+    
+    local currentIndex = 1
+    for i, color in ipairs(colors) do
+        if color == fovColor then
+            currentIndex = i + 1
+            break
+        end
+    end
+    
+    if currentIndex > #colors then
+        currentIndex = 1
+    end
+    
+    fovColor = colors[currentIndex]
+    ColorPreview.BackgroundColor3 = fovColor
+    if fovCircle then
+        fovCircle.Color = fovColor
+    end
+end)
+
 NebulaX:CreateToggle(FOVTab, "Show / Hide FOV", true, function(state)
+    fovVisible = state
+    if fovCircle then
+        fovCircle.Visible = state and fovEnabled
+    end
     print("Show FOV:", state)
 end)
 
@@ -503,10 +722,16 @@ PlayerTab.Visible = false
 PlayerTab.Parent = ContentFrame
 
 NebulaX:CreateSlider(PlayerTab, "Walk Speed", 16, 100, 16, function(value)
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = value
+    end
     print("Walk Speed:", value)
 end)
 
 NebulaX:CreateSlider(PlayerTab, "Jump Power", 50, 200, 50, function(value)
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.JumpPower = value
+    end
     print("Jump Power:", value)
 end)
 
@@ -527,15 +752,16 @@ TeleportTab.BackgroundTransparency = 1
 TeleportTab.Visible = false
 TeleportTab.Parent = ContentFrame
 
-local playerList = {}
-for _, player in ipairs(Players:GetPlayers()) do
-    if player ~= Players.LocalPlayer then
-        table.insert(playerList, player.Name)
-    end
-end
-
-NebulaX:CreateDropdown(TeleportTab, "Teleport to Player", playerList, "Select Player", function(selected)
+local playerDropdown = NebulaX:CreateDropdown(TeleportTab, "Teleport to Player", {}, "Select Player", function(selected)
     print("Selected Player:", selected)
+    
+    -- Teleport to selected player
+    local targetPlayer = Players:FindFirstChild(selected)
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+        end
+    end
 end)
 
 -- Farming Tab
@@ -640,7 +866,17 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
+-- Initialize FOV circle
+createFOVCircle()
+
+-- Update FOV circle when viewport changes
+Camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+    if fovCircle then
+        fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    end
+end)
+
 -- Initialize with menu closed
 MainWindow.Visible = false
 
-print("NebulaX v0.1 loaded successfully! Press F3 to open/close the menu.")
+print("NebulaX v0.1 - South London RP loaded successfully! Press F3 to open/close the menu.")
