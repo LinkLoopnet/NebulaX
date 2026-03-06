@@ -1,6 +1,7 @@
 -- NebulaX v0.1 - Universal Roblox 8-Ball Pool Classic GUI
 -- First Loader Script
 -- Build: A unique, well-laid-out UI/UX with Insert key toggle.
+-- Added: White aiming line for ball-to-hole alignment
 
 -- Services
 local Players = game:GetService("Players")
@@ -26,7 +27,8 @@ local Theme = {
     AccentSecondary = Color3.fromRGB(255, 50, 100), -- Neon Pink
     Text = Color3.fromRGB(240, 240, 240),
     Shadow = Color3.fromRGB(0, 0, 0),
-    Glow = Color3.fromRGB(0, 150, 255)
+    Glow = Color3.fromRGB(0, 150, 255),
+    AimLine = Color3.fromRGB(255, 255, 255) -- Pure white for aiming line
 }
 
 -- Setup GUI Properties
@@ -222,6 +224,146 @@ ContentPadding.PaddingBottom = UDim.new(0, 10)
 ContentPadding.PaddingLeft = UDim.new(0, 10)
 ContentPadding.PaddingRight = UDim.new(0, 10)
 
+-- Aim Line Drawing System
+local AimLineHolder = Instance.new("Folder")
+AimLineHolder.Name = "AimLineHolder"
+AimLineHolder.Parent = NebulaX
+
+local aimLineEnabled = false
+local aimLineConnections = {}
+
+local function createAimLinePart()
+    local part = Instance.new("Frame")
+    part.Name = "AimLine"
+    part.Parent = AimLineHolder
+    part.BackgroundColor3 = Theme.AimLine
+    part.BorderSizePixel = 0
+    part.AnchorPoint = Vector2.new(0, 0.5)
+    part.Size = UDim2.new(0, 0, 0, 2) -- Width will be set dynamically
+    part.ZIndex = 1000
+    part.Visible = false
+    
+    -- Add glow effect
+    local glow = Instance.new("Frame")
+    glow.Name = "Glow"
+    glow.Parent = part
+    glow.BackgroundColor3 = Theme.AimLine
+    glow.BackgroundTransparency = 0.5
+    glow.BorderSizePixel = 0
+    glow.AnchorPoint = Vector2.new(0, 0.5)
+    glow.Size = UDim2.new(1, 0, 1, 4)
+    glow.Position = UDim2.new(0, 0, 0.5, 0)
+    glow.ZIndex = 999
+    
+    local glowCorner = Instance.new("UICorner")
+    glowCorner.CornerRadius = UDim.new(1, 0)
+    glowCorner.Parent = glow
+    
+    local partCorner = Instance.new("UICorner")
+    partCorner.CornerRadius = UDim.new(1, 0)
+    partCorner.Parent = part
+    
+    return part
+end
+
+local aimLineParts = {}
+for i = 1, 10 do -- Create multiple line segments for dotted effect
+    aimLineParts[i] = createAimLinePart()
+end
+
+local function updateAimLine()
+    if not aimLineEnabled then
+        for _, part in ipairs(aimLineParts) do
+            part.Visible = false
+        end
+        return
+    end
+    
+    -- Find cue ball and pockets
+    local cueBall = nil
+    local pockets = {}
+    
+    -- Scan for balls and pockets (simplified - adjust based on actual game structure)
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("Part") or obj:IsA("MeshPart") then
+            if obj.Name:lower():find("cue") or obj.Name:lower():find("white") then
+                cueBall = obj
+            elseif obj.Name:lower():find("pocket") or obj.Name:lower():find("hole") then
+                table.insert(pockets, obj)
+            end
+        end
+    end
+    
+    if not cueBall or #pockets == 0 then return end
+    
+    -- Find nearest pocket to mouse cursor or target ball
+    local mousePos = UserInputService:GetMouseLocation()
+    local camera = Workspace.CurrentCamera
+    local targetPocket = nil
+    local shortestDist = math.huge
+    
+    -- Convert mouse position to world ray
+    local unitRay = camera:ScreenPointToRay(mousePos.X, mousePos.Y)
+    local mouseWorldOrigin = unitRay.Origin
+    local mouseWorldDirection = unitRay.Direction * 1000
+    
+    for _, pocket in ipairs(pockets) do
+        if pocket.Position then
+            -- Project pocket position to screen
+            local screenPos, onScreen = camera:WorldToScreenPoint(pocket.Position)
+            if onScreen then
+                local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                if dist < shortestDist then
+                    shortestDist = dist
+                    targetPocket = pocket
+                end
+            end
+        end
+    end
+    
+    if not targetPocket then return end
+    
+    -- Calculate direction from cue ball to target pocket
+    local direction = (targetPocket.Position - cueBall.Position).Unit
+    local lineLength = (targetPocket.Position - cueBall.Position).Magnitude
+    
+    -- Create line segments along the path
+    local segmentLength = lineLength / #aimLineParts
+    local gap = 5 -- Gap between segments in pixels
+    
+    for i, part in ipairs(aimLineParts) do
+        local t = (i - 0.5) / #aimLineParts
+        local point = cueBall.Position + direction * (t * lineLength)
+        
+        -- Convert world point to screen
+        local screenPoint, onScreen = camera:WorldToScreenPoint(point)
+        if onScreen then
+            part.Visible = true
+            part.Position = UDim2.new(0, screenPoint.X, 0, screenPoint.Y)
+            
+            -- Set size based on distance and make it dotted
+            local distFromCamera = (camera.CFrame.Position - point).Magnitude
+            local scale = 1000 / distFromCamera
+            local width = math.clamp(20 * scale, 10, 100)
+            
+            -- Alternate visibility for dotted effect
+            if i % 2 == 0 then
+                part.Size = UDim2.new(0, width, 0, 3)
+                part.Glow.Size = UDim2.new(1, 0, 1, 6)
+            else
+                part.Size = UDim2.new(0, width, 0, 2)
+                part.Glow.Size = UDim2.new(1, 0, 1, 4)
+            end
+            
+            -- Rotate to face direction
+            local angle = math.atan2(direction.Y, direction.X)
+            part.Rotation = math.deg(angle)
+        else
+            part.Visible = false
+        end
+    end
+end
+
 -- Function to create a toggle item
 local function createToggleItem(category, name, description, default)
     local item = Instance.new("Frame")
@@ -312,13 +454,30 @@ local function createToggleItem(category, name, description, default)
             TweenService:Create(toggle, TweenInfo.new(0.2), {BackgroundColor3 = Theme.Background}):Play()
             itemStroke.Color = Theme.Accent
         end
+        
+        -- Special handling for Auto Aim Line
+        if name == "Auto Aim Line" then
+            aimLineEnabled = enabled
+            if enabled then
+                if #aimLineConnections == 0 then
+                    table.insert(aimLineConnections, RunService.RenderStepped:Connect(updateAimLine))
+                end
+            else
+                for _, conn in ipairs(aimLineConnections) do
+                    conn:Disconnect()
+                end
+                aimLineConnections = {}
+                for _, part in ipairs(aimLineParts) do
+                    part.Visible = false
+                end
+            end
+        end
     end
     updateToggle()
     
     toggleButton.MouseButton1Click:Connect(function()
         enabled = not enabled
         updateToggle()
-        -- Here you would call the actual feature enable/disable
         print(("[%s] %s toggled: %s"):format(category, name, enabled))
     end)
     
@@ -335,7 +494,7 @@ function updateTabContent(tabName)
     end
     
     if tabName == "Aim Tools" then
-        createToggleItem("Aim Tools", "Auto Aim Line", "Extended aiming guide for better visibility", true)
+        createToggleItem("Aim Tools", "Auto Aim Line", "White aiming guide line from cue ball to pocket", true)
         createToggleItem("Aim Tools", "Perfect Shot Helper", "Shows the best angle for the current shot", false)
         createToggleItem("Aim Tools", "Spin Assist", "Visual indicator for cue ball spin direction", false)
         createToggleItem("Aim Tools", "Bank Shot Guide", "Highlights optimal bounce paths off walls", false)
@@ -355,8 +514,7 @@ function updateTabContent(tabName)
         createToggleItem("Visual", "Ball ESP", "Glowing outline around all balls", false)
         createToggleItem("Visual", "Pocket Highlight", "Pockets glow for better visibility", true)
         createToggleItem("Visual", "Cue Trail Effect", "Shows line where cue will hit", false)
-        local themeItem = createToggleItem("Visual", "Table Theme Changer", "Toggle between different table themes", false)
-        -- Special case for theme changer: could add dropdown later, but keep as toggle for now
+        createToggleItem("Visual", "Table Theme Changer", "Toggle between different table themes", false)
     end
     
     -- Update canvas size based on content
@@ -401,4 +559,4 @@ spawn(function()
     end
 end)
 
-print("NebulaX v0.1 loaded successfully. Press Insert to toggle.")
+print("NebulaX v0.1 loaded successfully with White Aim Line. Press Insert to toggle.")
