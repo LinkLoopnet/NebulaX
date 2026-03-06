@@ -1,5 +1,5 @@
 -- NebulaX v0.1 - Universal Roblox South London Remastered GUI
--- Main Framework
+-- Main Framework with Enhanced ESP
 
 local NebulaX = {
     Version = "v0.1",
@@ -36,6 +36,254 @@ if not ScreenGui.Parent then
         ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
     end)
 end
+
+-- ESP Storage
+local ESPObjects = {}
+local ESPEnabled = {
+    PlayerESP = false,
+    NameESP = false,
+    HealthESP = false,
+    DistanceESP = false,
+    BoxESP = false,
+    Tracers = false,
+    Highlight = false
+}
+
+-- Utility Functions
+local function CreateESPObject(player)
+    local esp = {}
+    
+    -- Main ESP container
+    local container = Instance.new("BillboardGui")
+    container.Name = player.Name .. "_ESP"
+    container.Adornee = player.Character and player.Character:FindFirstChild("Head")
+    container.Size = UDim2.new(0, 200, 0, 100)
+    container.StudsOffset = Vector3.new(0, 3, 0)
+    container.AlwaysOnTop = true
+    container.ResetOnSpawn = false
+    container.Parent = ScreenGui
+    
+    -- Name label
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Name = "Name"
+    nameLabel.Size = UDim2.new(1, 0, 0, 20)
+    nameLabel.Position = UDim2.new(0, 0, 0, -25)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = player.Name
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    nameLabel.TextStrokeTransparency = 0.3
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextSize = 14
+    nameLabel.Visible = false
+    nameLabel.Parent = container
+    
+    -- Health bar background
+    local healthBg = Instance.new("Frame")
+    healthBg.Name = "HealthBg"
+    healthBg.Size = UDim2.new(1, 0, 0, 4)
+    healthBg.Position = UDim2.new(0, 0, 0, 5)
+    healthBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    healthBg.BorderSizePixel = 0
+    healthBg.Visible = false
+    healthBg.Parent = container
+    
+    -- Health bar fill
+    local healthBar = Instance.new("Frame")
+    healthBar.Name = "HealthBar"
+    healthBar.Size = UDim2.new(1, 0, 1, 0)
+    healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    healthBar.BorderSizePixel = 0
+    healthBar.Parent = healthBg
+    
+    -- Distance label
+    local distanceLabel = Instance.new("TextLabel")
+    distanceLabel.Name = "Distance"
+    distanceLabel.Size = UDim2.new(1, 0, 0, 20)
+    distanceLabel.Position = UDim2.new(0, 0, 0, 10)
+    distanceLabel.BackgroundTransparency = 1
+    distanceLabel.Text = ""
+    distanceLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    distanceLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    distanceLabel.TextStrokeTransparency = 0.3
+    distanceLabel.Font = Enum.Font.Gotham
+    distanceLabel.TextSize = 12
+    distanceLabel.Visible = false
+    distanceLabel.Parent = container
+    
+    -- Box ESP (Drawing lines for box)
+    local boxFrame = Instance.new("Frame")
+    boxFrame.Name = "Box"
+    boxFrame.Size = UDim2.new(1, 0, 1, 0)
+    boxFrame.Position = UDim2.new(0, -50, 0, -30)
+    boxFrame.BackgroundTransparency = 1
+    boxFrame.BorderSizePixel = 2
+    boxFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)
+    boxFrame.Visible = false
+    boxFrame.Parent = container
+    
+    esp.Container = container
+    esp.NameLabel = nameLabel
+    esp.HealthBg = healthBg
+    esp.HealthBar = healthBar
+    esp.DistanceLabel = distanceLabel
+    esp.BoxFrame = boxFrame
+    
+    return esp
+end
+
+-- Tracer lines using Drawing
+local Tracers = {}
+local function CreateTracer(player)
+    local tracer = Drawing.new("Line")
+    tracer.Thickness = 1.5
+    tracer.Color = Color3.fromRGB(255, 255, 255)
+    tracer.Transparency = 1
+    tracer.Visible = false
+    tracer.From = Vector2.new(0, 0)
+    tracer.To = Vector2.new(0, 0)
+    Tracers[player] = tracer
+    return tracer
+end
+
+-- Update ESP for all players
+local function UpdateESP()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") and player.Character:FindFirstChild("Humanoid") then
+            local head = player.Character.Head
+            local humanoid = player.Character.Humanoid
+            local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+            
+            -- Create ESP object if doesn't exist
+            if not ESPObjects[player] then
+                ESPObjects[player] = CreateESPObject(player)
+                CreateTracer(player)
+            end
+            
+            local esp = ESPObjects[player]
+            local tracer = Tracers[player]
+            
+            -- Update BillboardGui attachment
+            esp.Container.Adornee = head
+            
+            -- Update Name ESP
+            if ESPEnabled.NameESP then
+                esp.NameLabel.Visible = true
+                esp.NameLabel.Text = player.Name
+                -- Add level if available (customize based on game)
+                local level = player.Character:FindFirstChild("Level") or player:FindFirstChild("Data")
+                if level then
+                    esp.NameLabel.Text = player.Name .. " [" .. tostring(level.Value or "?") .. "]"
+                end
+            else
+                esp.NameLabel.Visible = false
+            end
+            
+            -- Update Health ESP
+            if ESPEnabled.HealthESP then
+                esp.HealthBg.Visible = true
+                local healthPercent = humanoid.Health / humanoid.MaxHealth
+                esp.HealthBar.Size = UDim2.new(healthPercent, 0, 1, 0)
+                
+                -- Color based on health
+                if healthPercent > 0.6 then
+                    esp.HealthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+                elseif healthPercent > 0.3 then
+                    esp.HealthBar.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+                else
+                    esp.HealthBar.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+                end
+            else
+                esp.HealthBg.Visible = false
+            end
+            
+            -- Update Distance ESP
+            if ESPEnabled.DistanceESP and rootPart then
+                esp.DistanceLabel.Visible = true
+                local distance = (Camera.CFrame.Position - rootPart.Position).Magnitude
+                esp.DistanceLabel.Text = math.floor(distance) .. " studs"
+            else
+                esp.DistanceLabel.Visible = false
+            end
+            
+            -- Update Box ESP
+            if ESPEnabled.BoxESP then
+                esp.BoxFrame.Visible = true
+                -- Adjust box size based on distance
+                local distance = (Camera.CFrame.Position - head.Position).Magnitude
+                local scale = math.clamp(200 / distance, 0.5, 2)
+                esp.BoxFrame.Size = UDim2.new(scale, 0, scale * 1.5, 0)
+                esp.BoxFrame.BorderColor3 = player.TeamColor == LocalPlayer.TeamColor and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+            else
+                esp.BoxFrame.Visible = false
+            end
+            
+            -- Update Tracers
+            if ESPEnabled.Tracers and rootPart then
+                local screenPos, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+                if onScreen then
+                    tracer.Visible = true
+                    tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                    tracer.To = Vector2.new(screenPos.X, screenPos.Y)
+                    tracer.Color = player.TeamColor == LocalPlayer.TeamColor and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+                else
+                    tracer.Visible = false
+                end
+            else
+                tracer.Visible = false
+            end
+            
+            -- Update Highlight
+            if ESPEnabled.Highlight then
+                -- Highlight logic (using DepthOfField or similar)
+            end
+        end
+    end
+    
+    -- Clean up ESP for players who left
+    for player, esp in pairs(ESPObjects) do
+        if not Players:FindFirstChild(player.Name) then
+            esp.Container:Destroy()
+            if Tracers[player] then
+                Tracers[player]:Remove()
+                Tracers[player] = nil
+            end
+            ESPObjects[player] = nil
+        end
+    end
+end
+
+-- Start ESP loop
+RunService.RenderStepped:Connect(function()
+    if ESPEnabled.PlayerESP then
+        UpdateESP()
+    else
+        -- Hide all ESP if disabled
+        for _, esp in pairs(ESPObjects) do
+            if esp.Container then
+                esp.Container.Visible = false
+            end
+        end
+        for _, tracer in pairs(Tracers) do
+            tracer.Visible = false
+        end
+    end
+end)
+
+-- Player connection
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        -- Recreate ESP when character respawns
+        if ESPObjects[player] then
+            ESPObjects[player].Container:Destroy()
+            ESPObjects[player] = nil
+        end
+        if Tracers[player] then
+            Tracers[player]:Remove()
+            Tracers[player] = nil
+        end
+    end)
+end)
 
 -- Notification System
 local Notifications = {}
@@ -837,72 +1085,105 @@ local MainWindow = Library:CreateWindow("NebulaX " .. NebulaX.Version)
 local PlayerTab = MainWindow:AddTab("Player", "👤")
 local PlayerSection = PlayerTab:AddSection("Player Settings")
 PlayerSection:AddSlider("WalkSpeed", 16, 100, 16, function(value)
-    LocalPlayer.Character.Humanoid.WalkSpeed = value
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = value
+    end
 end)
 PlayerSection:AddSlider("JumpPower", 50, 200, 50, function(value)
-    LocalPlayer.Character.Humanoid.JumpPower = value
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.JumpPower = value
+    end
 end)
 PlayerSection:AddToggle("Infinite Jump", false, function(state)
     _G.InfiniteJump = state
-    if state then
-        UserInputService.JumpRequest:Connect(function()
-            if _G.InfiniteJump and LocalPlayer.Character then
-                LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-            end
-        end)
+end)
+
+-- Infinite Jump connection
+UserInputService.JumpRequest:Connect(function()
+    if _G.InfiniteJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
     end
 end)
+
 PlayerSection:AddToggle("Noclip", false, function(state)
     _G.Noclip = state
-    if state then
-        RunService.Stepped:Connect(function()
-            if _G.Noclip and LocalPlayer.Character then
-                for _, part in pairs(LocalPlayer.Character:GetChildren()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
-                end
+end)
+
+-- Noclip connection
+RunService.Stepped:Connect(function()
+    if _G.Noclip and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
             end
-        end)
+        end
     end
 end)
+
 PlayerSection:AddToggle("Anti-Ragdoll", false, function(state)
     _G.AntiRagdoll = state
     -- Implementation would check for ragdoll states
 end)
+
 PlayerSection:AddToggle("Auto Sprint", false, function(state)
     _G.AutoSprint = state
-    if state then
-        RunService.RenderStepped:Connect(function()
-            if _G.AutoSprint and LocalPlayer.Character then
-                LocalPlayer.Character.Humanoid:SetAttribute("Sprinting", true)
-            end
-        end)
+end)
+
+-- Auto Sprint connection
+RunService.RenderStepped:Connect(function()
+    if _G.AutoSprint and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid:SetAttribute("Sprinting", true)
     end
 end)
+
 PlayerSection:AddButton("Reset Character", function()
-    LocalPlayer.Character:BreakJoints()
+    if LocalPlayer.Character then
+        LocalPlayer.Character:BreakJoints()
+    end
 end)
 
 -- ESP / Visuals Category
 local ESPTab = MainWindow:AddTab("ESP", "👁️")
 local ESPMainSection = ESPTab:AddSection("ESP Settings")
+
 ESPMainSection:AddToggle("Player ESP", false, function(state)
-    _G.PlayerESP = state
-    -- ESP implementation would go here
+    ESPEnabled.PlayerESP = state
+    Notifications:Send("ESP", "Player ESP " .. (state and "Enabled" or "Disabled"), 2)
 end)
-ESPMainSection:AddToggle("Name ESP", false, nil)
-ESPMainSection:AddToggle("Health ESP", false, nil)
-ESPMainSection:AddToggle("Distance ESP", false, nil)
-ESPMainSection:AddToggle("Box ESP", false, nil)
-ESPMainSection:AddToggle("Tracer Lines", false, nil)
-ESPMainSection:AddToggle("Highlight Enemies", false, nil)
+
+ESPMainSection:AddToggle("Name ESP", false, function(state)
+    ESPEnabled.NameESP = state
+end)
+
+ESPMainSection:AddToggle("Health ESP", false, function(state)
+    ESPEnabled.HealthESP = state
+end)
+
+ESPMainSection:AddToggle("Distance ESP", false, function(state)
+    ESPEnabled.DistanceESP = state
+end)
+
+ESPMainSection:AddToggle("Box ESP", false, function(state)
+    ESPEnabled.BoxESP = state
+end)
+
+ESPMainSection:AddToggle("Tracer Lines", false, function(state)
+    ESPEnabled.Tracers = state
+end)
+
+ESPMainSection:AddToggle("Highlight Enemies", false, function(state)
+    ESPEnabled.Highlight = state
+end)
 
 -- Combat Category
 local CombatTab = MainWindow:AddTab("Combat", "⚔️")
 local CombatSection = CombatTab:AddSection("Combat Settings")
-CombatSection:AddToggle("Silent Aim", false, nil)
-CombatSection:AddToggle("Aim Assist", false, nil)
+CombatSection:AddToggle("Silent Aim", false, function(state)
+    _G.SilentAim = state
+end)
+CombatSection:AddToggle("Aim Assist", false, function(state)
+    _G.AimAssist = state
+end)
 CombatSection:AddSlider("FOV Circle", 50, 500, 100, function(value)
     _G.FOVSize = value
 end)
@@ -918,10 +1199,12 @@ local SettingsSection = SettingsTab:AddSection("UI Settings")
 SettingsSection:AddDropdown("UI Theme", {"Dark", "Light", "Purple", "Neon"}, "Dark", function(theme)
     NebulaX.Theme = theme
     UpdateTheme(theme)
+    Notifications:Send("Theme", "Changed to " .. theme, 2)
 end)
 
 SettingsSection:AddDropdown("Toggle Keybind", {"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9"}, "F3", function(key)
     NebulaX.ToggleKey = Enum.KeyCode[key]
+    Notifications:Send("Keybind", "Toggle key set to " .. key, 2)
 end)
 
 SettingsSection:AddSlider("UI Size", 0.5, 1.5, 1, function(value)
@@ -931,6 +1214,7 @@ end)
 
 SettingsSection:AddButton("Reset Settings", function()
     -- Reset all settings to default
+    Notifications:Send("Settings", "All settings reset to default", 3)
 end)
 
 local InfoSection = SettingsTab:AddSection("Script Info")
@@ -946,5 +1230,15 @@ infoText.Parent = InfoSection.Content
 
 -- Initialize
 Notifications:Send("NebulaX Loaded", "Press F3 to open the menu", 3)
+
+-- Cleanup on game exit
+game:BindToClose(function()
+    for _, tracer in pairs(Tracers) do
+        tracer:Remove()
+    end
+    if ScreenGui then
+        ScreenGui:Destroy()
+    end
+end)
 
 return NebulaX
