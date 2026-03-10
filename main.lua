@@ -1,5 +1,5 @@
--- NebulaX v0.1 - Universal Roblox Jailbreak GUI
--- Premium Edition - £100 Million UI/UX Design
+-- NebulaX v0.1 Framework
+-- Created by NovaBreakNewton
 
 -- Services
 local Players = game:GetService("Players")
@@ -7,798 +7,667 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
-local VirtualInputManager = game:GetService("VirtualInputManager")
+local VirtualUser = game:GetService("VirtualUser")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Variables
 local player = Players.LocalPlayer
-local camera = workspace.CurrentCamera
 local mouse = player:GetMouse()
+local camera = workspace.CurrentCamera
 local guiEnabled = false
-local currentToggles = {}
-local connections = {}
+local gui
 
--- Create Main GUI Holder
-local NebulaX = Instance.new("ScreenGui")
-NebulaX.Name = "NebulaX"
-NebulaX.DisplayOrder = 999
-NebulaX.ResetOnSpawn = false
-NebulaX.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-NebulaX.Parent = CoreGui
-
--- Premium Shadow Effect
-local ShadowHolder = Instance.new("Frame")
-ShadowHolder.Name = "ShadowHolder"
-ShadowHolder.Size = UDim2.new(0, 500, 0, 600)
-ShadowHolder.Position = UDim2.new(0.5, -250, 0.5, -300)
-ShadowHolder.BackgroundTransparency = 1
-ShadowHolder.Parent = NebulaX
-
--- Create multiple shadow layers for depth
-local shadows = {}
-for i = 1, 5 do
-    local shadow = Instance.new("Frame")
-    shadow.Name = "Shadow"..i
-    shadow.Size = UDim2.new(1, 20 + (i*2), 1, 20 + (i*2))
-    shadow.Position = UDim2.new(0.5, -(10 + i), 0.5, -(10 + i))
-    shadow.BackgroundColor3 = Color3.new(0, 0, 0)
-    shadow.BackgroundTransparency = 0.9 - (i * 0.15)
-    shadow.BorderSizePixel = 0
-    shadow.AnchorPoint = Vector2.new(0.5, 0.5)
-    shadow.ZIndex = -i
-    shadow.Parent = ShadowHolder
-    shadows[i] = shadow
-end
-
--- Main Frame
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 500, 0, 600)
-MainFrame.Position = UDim2.new(0.5, -250, 0.5, -300)
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 12, 18)
-MainFrame.BorderSizePixel = 0
-MainFrame.ClipsDescendants = true
-MainFrame.Visible = false
-
--- Add gradient background
-local UIGradient = Instance.new("UIGradient")
-UIGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 20, 30)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(20, 25, 40)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 15, 25))
-})
-UIGradient.Rotation = 45
-UIGradient.Parent = MainFrame
-
--- Premium border glow
-local BorderGlow = Instance.new("Frame")
-BorderGlow.Name = "BorderGlow"
-BorderGlow.Size = UDim2.new(1, 4, 1, 4)
-BorderGlow.Position = UDim2.new(0, -2, 0, -2)
-BorderGlow.BackgroundTransparency = 1
-BorderGlow.ZIndex = 1
-
-local BorderGlowGradient = Instance.new("UIGradient")
-BorderGlowGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 255)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 0, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 255))
-})
-BorderGlowGradient.Rotation = 90
-BorderGlowGradient.Parent = BorderGlow
-
-local BorderGlowStroke = Instance.new("UIStroke")
-BorderGlowStroke.Thickness = 2
-BorderGlowStroke.Color = Color3.fromRGB(255, 255, 255)
-BorderGlowStroke.Transparency = 0.5
-BorderGlowStroke.Parent = BorderGlow
-
-BorderGlow.Parent = MainFrame
-
--- Title Bar
-local TitleBar = Instance.new("Frame")
-TitleBar.Name = "TitleBar"
-TitleBar.Size = UDim2.new(1, 0, 0, 40)
-TitleBar.BackgroundColor3 = Color3.fromRGB(5, 7, 12)
-TitleBar.BorderSizePixel = 0
-
--- Title Bar Gradient
-local TitleGradient = Instance.new("UIGradient")
-TitleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 40, 60)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 15, 25))
-})
-TitleGradient.Parent = TitleBar
-
--- Logo
-local Logo = Instance.new("ImageLabel")
-Logo.Name = "Logo"
-Logo.Size = UDim2.new(0, 30, 0, 30)
-Logo.Position = UDim2.new(0, 10, 0.5, -15)
-Logo.BackgroundTransparency = 1
-Logo.Image = "rbxassetid://139139139" -- Replace with actual logo
-Logo.ImageColor3 = Color3.fromRGB(0, 255, 255)
-Logo.Parent = TitleBar
-
--- Title Text
-local TitleText = Instance.new("TextLabel")
-TitleText.Name = "TitleText"
-TitleText.Size = UDim2.new(0, 200, 1, 0)
-TitleText.Position = UDim2.new(0, 45, 0, 0)
-TitleText.BackgroundTransparency = 1
-TitleText.Text = "NEBULA X"
-TitleText.Font = Enum.Font.GothamBold
-TitleText.TextSize = 18
-TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleText.TextXAlignment = Enum.TextXAlignment.Left
-
--- Add text stroke
-local TitleStroke = Instance.new("UIStroke")
-TitleStroke.Thickness = 1
-TitleStroke.Color = Color3.fromRGB(0, 200, 255)
-TitleStroke.Transparency = 0.5
-TitleStroke.Parent = TitleText
-
--- Version Tag
-local VersionTag = Instance.new("TextLabel")
-VersionTag.Name = "VersionTag"
-VersionTag.Size = UDim2.new(0, 40, 0, 20)
-VersionTag.Position = UDim2.new(0, 210, 0.5, -10)
-VersionTag.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-VersionTag.BackgroundTransparency = 0.7
-VersionTag.Text = "v0.1"
-VersionTag.Font = Enum.Font.Gotham
-VersionTag.TextSize = 12
-VersionTag.TextColor3 = Color3.fromRGB(200, 230, 255)
-VersionTag.Parent = TitleBar
-
--- Close Button
-local CloseButton = Instance.new("TextButton")
-CloseButton.Name = "CloseButton"
-CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Position = UDim2.new(1, -35, 0.5, -15)
-CloseButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-CloseButton.BackgroundTransparency = 0.3
-CloseButton.Text = "×"
-CloseButton.Font = Enum.Font.GothamBold
-CloseButton.TextSize = 20
-CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.AutoButtonColor = false
-
--- Close Button Hover
-CloseButton.MouseEnter:Connect(function()
-    TweenService:Create(CloseButton, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
+-- Anti AFK
+player.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
 end)
 
-CloseButton.MouseLeave:Connect(function()
-    TweenService:Create(CloseButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.3}):Play()
-end)
-
-CloseButton.MouseButton1Click:Connect(function()
-    toggleGUI()
-end)
-
-CloseButton.Parent = TitleBar
-
--- Category Buttons Frame
-local CategoryFrame = Instance.new("Frame")
-CategoryFrame.Name = "CategoryFrame"
-CategoryFrame.Size = UDim2.new(1, 0, 0, 50)
-CategoryFrame.Position = UDim2.new(0, 0, 0, 40)
-CategoryFrame.BackgroundColor3 = Color3.fromRGB(15, 18, 25)
-CategoryFrame.BorderSizePixel = 0
-
-local CategoryList = Instance.new("UIListLayout")
-CategoryList.FillDirection = Enum.FillDirection.Horizontal
-CategoryList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-CategoryList.VerticalAlignment = Enum.VerticalAlignment.Center
-CategoryList.Padding = UDim.new(0, 5)
-CategoryList.Parent = CategoryFrame
-
--- Categories
-local categories = {
-    {name = "CHARACTER", icon = "👤"},
-    {name = "AUTO FARM", icon = "⚡"},
-    {name = "VEHICLE", icon = "🚗"},
-    {name = "TELEPORTS", icon = "🌍"},
-    {name = "COMBAT", icon = "⚔️"},
-    {name = "ESP", icon = "👁️"}
-}
-
-local categoryButtons = {}
-local currentCategory = "CHARACTER"
-
--- Content Frame
-local ContentFrame = Instance.new("ScrollingFrame")
-ContentFrame.Name = "ContentFrame"
-ContentFrame.Size = UDim2.new(1, -20, 1, -110)
-ContentFrame.Position = UDim2.new(0, 10, 0, 100)
-ContentFrame.BackgroundTransparency = 1
-ContentFrame.BorderSizePixel = 0
-ContentFrame.ScrollBarThickness = 4
-ContentFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 200, 255)
-ContentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-
-local ContentList = Instance.new("UIListLayout")
-ContentList.Padding = UDim.new(0, 8)
-ContentList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-ContentList.SortOrder = Enum.SortOrder.LayoutOrder
-ContentList.Parent = ContentFrame
-
--- Function to create toggle button
-local function createToggle(name, icon, category, defaultValue, callback)
-    local toggleFrame = Instance.new("Frame")
-    toggleFrame.Name = name.."Toggle"
-    toggleFrame.Size = UDim2.new(1, -10, 0, 45)
-    toggleFrame.BackgroundColor3 = Color3.fromRGB(20, 23, 30)
-    toggleFrame.BackgroundTransparency = 0.3
-    toggleFrame.BorderSizePixel = 0
-    toggleFrame.Parent = ContentFrame
+-- Create Main GUI
+local function createGUI()
+    -- ScreenGui
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "NebulaX"
+    screenGui.Parent = CoreGui
+    screenGui.ResetOnSpawn = false
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    -- Rounded corners
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 6)
-    UICorner.Parent = toggleFrame
+    -- Main Frame
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "MainFrame"
+    mainFrame.Size = UDim2.new(0, 600, 0, 400)
+    mainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Active = true
+    mainFrame.Draggable = true
+    mainFrame.Visible = false
+    mainFrame.Parent = screenGui
     
-    -- Inner glow
-    local InnerGlow = Instance.new("Frame")
-    InnerGlow.Size = UDim2.new(1, -2, 1, -2)
-    InnerGlow.Position = UDim2.new(0, 1, 0, 1)
-    InnerGlow.BackgroundTransparency = 1
-    InnerGlow.BorderSizePixel = 0
+    -- Corner
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = mainFrame
     
-    local GlowStroke = Instance.new("UIStroke")
-    GlowStroke.Thickness = 1
-    GlowStroke.Color = Color3.fromRGB(0, 200, 255)
-    GlowStroke.Transparency = 0.8
-    GlowStroke.Parent = InnerGlow
-    InnerGlow.Parent = toggleFrame
+    -- Title Bar
+    local titleBar = Instance.new("Frame")
+    titleBar.Name = "TitleBar"
+    titleBar.Size = UDim2.new(1, 0, 0, 30)
+    titleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    titleBar.BorderSizePixel = 0
+    titleBar.Parent = mainFrame
     
-    -- Icon
-    local IconLabel = Instance.new("TextLabel")
-    IconLabel.Size = UDim2.new(0, 40, 1, 0)
-    IconLabel.BackgroundTransparency = 1
-    IconLabel.Text = icon
-    IconLabel.Font = Enum.Font.Gotham
-    IconLabel.TextSize = 20
-    IconLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-    IconLabel.Parent = toggleFrame
+    local titleCorner = Instance.new("UICorner")
+    titleCorner.CornerRadius = UDim.new(0, 8)
+    titleCorner.Parent = titleBar
     
-    -- Name
-    local NameLabel = Instance.new("TextLabel")
-    NameLabel.Size = UDim2.new(0, 150, 1, 0)
-    NameLabel.Position = UDim2.new(0, 40, 0, 0)
-    NameLabel.BackgroundTransparency = 1
-    NameLabel.Text = name
-    NameLabel.Font = Enum.Font.Gotham
-    NameLabel.TextSize = 14
-    NameLabel.TextColor3 = Color3.fromRGB(220, 230, 255)
-    NameLabel.TextXAlignment = Enum.TextXAlignment.Left
-    NameLabel.Parent = toggleFrame
+    local titleText = Instance.new("TextLabel")
+    titleText.Size = UDim2.new(1, -40, 1, 0)
+    titleText.Position = UDim2.new(0, 10, 0, 0)
+    titleText.BackgroundTransparency = 1
+    titleText.Text = "NebulaX v0.1"
+    titleText.TextColor3 = Color3.fromRGB(0, 255, 255)
+    titleText.TextXAlignment = Enum.TextXAlignment.Left
+    titleText.Font = Enum.Font.GothamBold
+    titleText.TextSize = 16
+    titleText.Parent = titleBar
     
-    -- Toggle button
-    local ToggleButton = Instance.new("TextButton")
-    ToggleButton.Size = UDim2.new(0, 50, 0, 25)
-    ToggleButton.Position = UDim2.new(1, -60, 0.5, -12.5)
-    ToggleButton.BackgroundColor3 = defaultValue and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 50, 50)
-    ToggleButton.Text = defaultValue and "ON" or "OFF"
-    ToggleButton.Font = Enum.Font.GothamBold
-    ToggleButton.TextSize = 12
-    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ToggleButton.AutoButtonColor = false
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0, 30, 0, 30)
+    closeBtn.Position = UDim2.new(1, -30, 0, 0)
+    closeBtn.BackgroundTransparency = 1
+    closeBtn.Text = "X"
+    closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+    closeBtn.TextSize = 20
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.Parent = titleBar
     
-    local ToggleCorner = Instance.new("UICorner")
-    ToggleCorner.CornerRadius = UDim.new(0, 4)
-    ToggleCorner.Parent = ToggleButton
-    
-    local toggled = defaultValue
-    
-    ToggleButton.MouseButton1Click:Connect(function()
-        toggled = not toggled
-        TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
-            BackgroundColor3 = toggled and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 50, 50)
-        }):Play()
-        ToggleButton.Text = toggled and "ON" or "OFF"
-        callback(toggled)
-        currentToggles[name] = toggled
+    closeBtn.MouseButton1Click:Connect(function()
+        guiEnabled = false
+        mainFrame.Visible = false
     end)
     
-    ToggleButton.Parent = toggleFrame
+    -- Category Buttons
+    local categories = {
+        {name = "Auto Farm", color = Color3.fromRGB(255, 100, 100)},
+        {name = "Combat", color = Color3.fromRGB(100, 255, 100)},
+        {name = "Player", color = Color3.fromRGB(100, 100, 255)},
+        {name = "Credits", color = Color3.fromRGB(255, 255, 100)}
+    }
     
-    return toggleFrame
-end
-
--- Function to create slider
-local function createSlider(name, icon, min, max, default, format, callback)
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Name = name.."Slider"
-    sliderFrame.Size = UDim2.new(1, -10, 0, 60)
-    sliderFrame.BackgroundColor3 = Color3.fromRGB(20, 23, 30)
-    sliderFrame.BackgroundTransparency = 0.3
-    sliderFrame.BorderSizePixel = 0
-    sliderFrame.Parent = ContentFrame
+    local categoryFrame = Instance.new("Frame")
+    categoryFrame.Name = "CategoryFrame"
+    categoryFrame.Size = UDim2.new(0, 120, 1, -30)
+    categoryFrame.Position = UDim2.new(0, 0, 0, 30)
+    categoryFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    categoryFrame.BorderSizePixel = 0
+    categoryFrame.Parent = mainFrame
     
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 6)
-    UICorner.Parent = sliderFrame
+    local categoryCorner = Instance.new("UICorner")
+    categoryCorner.CornerRadius = UDim.new(0, 8)
+    categoryCorner.Parent = categoryFrame
     
-    -- Icon
-    local IconLabel = Instance.new("TextLabel")
-    IconLabel.Size = UDim2.new(0, 40, 0, 40)
-    IconLabel.Position = UDim2.new(0, 10, 0, 10)
-    IconLabel.BackgroundTransparency = 1
-    IconLabel.Text = icon
-    IconLabel.Font = Enum.Font.Gotham
-    IconLabel.TextSize = 20
-    IconLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-    IconLabel.Parent = sliderFrame
+    local categoryList = Instance.new("ScrollingFrame")
+    categoryList.Size = UDim2.new(1, -10, 1, -10)
+    categoryList.Position = UDim2.new(0, 5, 0, 5)
+    categoryList.BackgroundTransparency = 1
+    categoryList.ScrollBarThickness = 4
+    categoryList.CanvasSize = UDim2.new(0, 0, 0, #categories * 40)
+    categoryList.Parent = categoryFrame
     
-    -- Name and Value
-    local NameLabel = Instance.new("TextLabel")
-    NameLabel.Size = UDim2.new(0, 150, 0, 20)
-    NameLabel.Position = UDim2.new(0, 60, 0, 10)
-    NameLabel.BackgroundTransparency = 1
-    NameLabel.Text = name
-    NameLabel.Font = Enum.Font.Gotham
-    NameLabel.TextSize = 14
-    NameLabel.TextColor3 = Color3.fromRGB(220, 230, 255)
-    NameLabel.TextXAlignment = Enum.TextXAlignment.Left
-    NameLabel.Parent = sliderFrame
+    local categoryButtons = {}
     
-    local ValueLabel = Instance.new("TextLabel")
-    ValueLabel.Size = UDim2.new(0, 50, 0, 20)
-    ValueLabel.Position = UDim2.new(1, -70, 0, 10)
-    ValueLabel.BackgroundTransparency = 1
-    ValueLabel.Text = format:gsub("{value}", default)
-    ValueLabel.Font = Enum.Font.GothamBold
-    ValueLabel.TextSize = 14
-    ValueLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-    ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
-    ValueLabel.Parent = sliderFrame
-    
-    -- Slider background
-    local SliderBg = Instance.new("Frame")
-    SliderBg.Size = UDim2.new(1, -80, 0, 6)
-    SliderBg.Position = UDim2.new(0, 60, 0, 40)
-    SliderBg.BackgroundColor3 = Color3.fromRGB(40, 45, 60)
-    SliderBg.BorderSizePixel = 0
-    
-    local BgCorner = Instance.new("UICorner")
-    BgCorner.CornerRadius = UDim.new(0, 3)
-    BgCorner.Parent = SliderBg
-    
-    -- Slider fill
-    local SliderFill = Instance.new("Frame")
-    SliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-    SliderFill.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-    SliderFill.BorderSizePixel = 0
-    
-    local FillCorner = Instance.new("UICorner")
-    FillCorner.CornerRadius = UDim.new(0, 3)
-    FillCorner.Parent = SliderFill
-    
-    -- Slider button
-    local SliderButton = Instance.new("TextButton")
-    SliderButton.Size = UDim2.new(0, 16, 0, 16)
-    SliderButton.Position = UDim2.new((default - min) / (max - min), -8, 0.5, -8)
-    SliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    SliderButton.Text = ""
-    SliderButton.AutoButtonColor = false
-    
-    local ButtonCorner = Instance.new("UICorner")
-    ButtonCorner.CornerRadius = UDim.new(0, 8)
-    ButtonCorner.Parent = SliderButton
-    
-    local ButtonStroke = Instance.new("UIStroke")
-    ButtonStroke.Thickness = 2
-    ButtonStroke.Color = Color3.fromRGB(0, 200, 255)
-    ButtonStroke.Parent = SliderButton
-    
-    -- Slider functionality
-    local dragging = false
-    
-    SliderButton.MouseButton1Down:Connect(function()
-        dragging = true
-    end)
-    
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    mouse.Move:Connect(function()
-        if dragging then
-            local relativeX = math.clamp((mouse.X - SliderBg.AbsolutePosition.X) / SliderBg.AbsoluteSize.X, 0, 1)
-            local value = math.floor(min + (relativeX * (max - min)) * 100) / 100
-            
-            SliderFill.Size = UDim2.new(relativeX, 0, 1, 0)
-            SliderButton.Position = UDim2.new(relativeX, -8, 0.5, -8)
-            ValueLabel.Text = format:gsub("{value}", value)
-            callback(value)
-        end
-    end)
-    
-    SliderFill.Parent = SliderBg
-    SliderButton.Parent = SliderBg
-    SliderBg.Parent = sliderFrame
-end
-
--- Function to create category content
-local function loadCategory(category)
-    -- Clear content
-    for _, child in pairs(ContentFrame:GetChildren()) do
-        if child:IsA("Frame") then
-            child:Destroy()
-        end
+    for i, category in ipairs(categories) do
+        local btn = Instance.new("TextButton")
+        btn.Name = category.name
+        btn.Size = UDim2.new(1, 0, 0, 35)
+        btn.Position = UDim2.new(0, 0, 0, (i-1) * 40)
+        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        btn.Text = category.name
+        btn.TextColor3 = category.color
+        btn.Font = Enum.Font.Gotham
+        btn.TextSize = 14
+        btn.Parent = categoryList
+        
+        local btnCorner = Instance.new("UICorner")
+        btnCorner.CornerRadius = UDim.new(0, 4)
+        btnCorner.Parent = btn
+        
+        table.insert(categoryButtons, btn)
     end
     
-    if category == "CHARACTER" then
-        createSlider("WalkSpeed", "🏃", 16, 100, 16, "{value}", function(v)
-            if player.Character and player.Character:FindFirstChild("Humanoid") then
-                player.Character.Humanoid.WalkSpeed = v
+    -- Content Frame
+    local contentFrame = Instance.new("Frame")
+    contentFrame.Name = "ContentFrame"
+    contentFrame.Size = UDim2.new(1, -130, 1, -30)
+    contentFrame.Position = UDim2.new(0, 125, 0, 35)
+    contentFrame.BackgroundTransparency = 1
+    contentFrame.Parent = mainFrame
+    
+    -- Create category pages
+    local pages = {}
+    
+    -- Auto Farm Page
+    local farmPage = createFarmPage()
+    farmPage.Parent = contentFrame
+    farmPage.Visible = false
+    pages["Auto Farm"] = farmPage
+    
+    -- Combat Page
+    local combatPage = createCombatPage()
+    combatPage.Parent = contentFrame
+    combatPage.Visible = false
+    pages["Combat"] = combatPage
+    
+    -- Player Page
+    local playerPage = createPlayerPage()
+    playerPage.Parent = contentFrame
+    playerPage.Visible = false
+    pages["Player"] = playerPage
+    
+    -- Credits Page
+    local creditsPage = createCreditsPage()
+    creditsPage.Parent = contentFrame
+    creditsPage.Visible = false
+    pages["Credits"] = creditsPage
+    
+    -- Show first page
+    pages["Auto Farm"].Visible = true
+    
+    -- Category button functionality
+    for _, btn in ipairs(categoryButtons) do
+        btn.MouseButton1Click:Connect(function()
+            for _, page in pairs(pages) do
+                page.Visible = false
             end
+            pages[btn.Name].Visible = true
         end)
+    end
+    
+    return screenGui, mainFrame
+end
+
+-- Create Farm Page
+function createFarmPage()
+    local frame = Instance.new("ScrollingFrame")
+    frame.BackgroundTransparency = 1
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.CanvasSize = UDim2.new(0, 0, 0, 300)
+    frame.ScrollBarThickness = 4
+    
+    local features = {
+        "Auto Rob",
+        "Auto Bank",
+        "Auto Jewelry",
+        "Auto Train Rob",
+        "Auto Power Plant",
+        "Auto Collect Money",
+        "Auto Escape Prison"
+    }
+    
+    for i, feature in ipairs(features) do
+        local toggle = createToggle(feature, UDim2.new(0, 10, 0, (i-1) * 35))
+        toggle.Parent = frame
         
-        createSlider("JumpPower", "🦘", 50, 200, 50, "{value}", function(v)
-            if player.Character and player.Character:FindFirstChild("Humanoid") then
-                player.Character.Humanoid.JumpPower = v
-            end
-        end)
-        
-        createToggle("Infinite Jump", "🔄", category, false, function(v)
-            currentToggles.InfiniteJump = v
-            if v then
-                connections.InfiniteJump = mouse.Jump:Connect(function()
-                    if player.Character and player.Character:FindFirstChild("Humanoid") then
-                        player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        -- Add functionality
+        if feature == "Auto Rob" then
+            toggle:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
+                -- Auto Rob functionality
+                spawn(function()
+                    while toggle:FindFirstChild("ToggleBtn").BackgroundColor3 == Color3.fromRGB(0, 255, 0) do
+                        -- Auto rob logic
+                        RunService.Heartbeat:Wait()
                     end
                 end)
-            else
-                if connections.InfiniteJump then
-                    connections.InfiniteJump:Disconnect()
-                    connections.InfiniteJump = nil
-                end
+            end)
+        elseif feature == "Auto Bank" then
+            toggle:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
+                spawn(function()
+                    while toggle:FindFirstChild("ToggleBtn").BackgroundColor3 == Color3.fromRGB(0, 255, 0) do
+                        -- Auto bank logic
+                        RunService.Heartbeat:Wait()
+                    end
+                end)
+            end)
+        elseif feature == "Auto Jewelry" then
+            toggle:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
+                spawn(function()
+                    while toggle:FindFirstChild("ToggleBtn").BackgroundColor3 == Color3.fromRGB(0, 255, 0) do
+                        -- Auto jewelry logic
+                        RunService.Heartbeat:Wait()
+                    end
+                end)
+            end)
+        end
+        -- Add similar logic for other farm features
+    end
+    
+    return frame
+end
+
+-- Create Combat Page
+function createCombatPage()
+    local frame = Instance.new("ScrollingFrame")
+    frame.BackgroundTransparency = 1
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.CanvasSize = UDim2.new(0, 0, 0, 200)
+    frame.ScrollBarThickness = 4
+    
+    local features = {
+        "Aimbot",
+        "Silent Aim",
+        "No Recoil",
+        "Fast Shooting",
+        "Infinite Ammo",
+        "Gun Mods"
+    }
+    
+    for i, feature in ipairs(features) do
+        local toggle = createToggle(feature, UDim2.new(0, 10, 0, (i-1) * 35))
+        toggle.Parent = frame
+        
+        -- Add aimbot functionality
+        if feature == "Aimbot" then
+            toggle:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
+                local aimbotEnabled = false
+                spawn(function()
+                    while toggle:FindFirstChild("ToggleBtn").BackgroundColor3 == Color3.fromRGB(0, 255, 0) do
+                        if aimbotEnabled then
+                            -- Aimbot logic
+                            local closestPlayer = getClosestPlayer()
+                            if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild("Head") then
+                                camera.CFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Character.Head.Position)
+                            end
+                        end
+                        RunService.Heartbeat:Wait()
+                    end
+                end)
+            end)
+        elseif feature == "No Recoil" then
+            toggle:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
+                -- No recoil logic
+                spawn(function()
+                    while toggle:FindFirstChild("ToggleBtn").BackgroundColor3 == Color3.fromRGB(0, 255, 0) do
+                        -- Remove recoil
+                        RunService.Heartbeat:Wait()
+                    end
+                end)
+            end)
+        end
+    end
+    
+    return frame
+end
+
+-- Create Player Page
+function createPlayerPage()
+    local frame = Instance.new("ScrollingFrame")
+    frame.BackgroundTransparency = 1
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.CanvasSize = UDim2.new(0, 0, 0, 250)
+    frame.ScrollBarThickness = 4
+    
+    -- WalkSpeed Slider
+    local wsLabel = Instance.new("TextLabel")
+    wsLabel.Size = UDim2.new(0, 100, 0, 25)
+    wsLabel.Position = UDim2.new(0, 10, 0, 10)
+    wsLabel.BackgroundTransparency = 1
+    wsLabel.Text = "WalkSpeed"
+    wsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    wsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    wsLabel.Font = Enum.Font.Gotham
+    wsLabel.TextSize = 14
+    wsLabel.Parent = frame
+    
+    local wsSlider = createSlider(UDim2.new(0, 120, 0, 20), 16, 100, 16)
+    wsSlider.Position = UDim2.new(0, 10, 0, 35)
+    wsSlider.Parent = frame
+    
+    wsSlider:FindFirstChild("SliderButton").MouseButton1Down:Connect(function()
+        local sliding = true
+        local connection
+        connection = RunService.RenderStepped:Connect(function()
+            if sliding and player.Character and player.Character:FindFirstChild("Humanoid") then
+                local sliderPos = math.clamp(mouse.X - wsSlider.AbsolutePosition.X, 0, wsSlider.AbsoluteSize.X)
+                local percent = sliderPos / wsSlider.AbsoluteSize.X
+                local value = math.floor(16 + (percent * 84))
+                player.Character.Humanoid.WalkSpeed = value
+                wsSlider:FindFirstChild("Value").Text = tostring(value)
             end
         end)
         
-        createToggle("No Ragdoll", "🛡️", category, false, function(v)
-            currentToggles.NoRagdoll = v
-            -- Implement no ragdoll logic
+        local release
+        release = UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                sliding = false
+                connection:Disconnect()
+                release:Disconnect()
+            end
+        end)
+    end)
+    
+    -- JumpPower Slider
+    local jpLabel = Instance.new("TextLabel")
+    jpLabel.Size = UDim2.new(0, 100, 0, 25)
+    jpLabel.Position = UDim2.new(0, 10, 0, 70)
+    jpLabel.BackgroundTransparency = 1
+    jpLabel.Text = "JumpPower"
+    jpLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    jpLabel.TextXAlignment = Enum.TextXAlignment.Left
+    jpLabel.Font = Enum.Font.Gotham
+    jpLabel.TextSize = 14
+    jpLabel.Parent = frame
+    
+    local jpSlider = createSlider(UDim2.new(0, 120, 0, 20), 50, 200, 50)
+    jpSlider.Position = UDim2.new(0, 10, 0, 95)
+    jpSlider.Parent = frame
+    
+    jpSlider:FindFirstChild("SliderButton").MouseButton1Down:Connect(function()
+        local sliding = true
+        local connection
+        connection = RunService.RenderStepped:Connect(function()
+            if sliding and player.Character and player.Character:FindFirstChild("Humanoid") then
+                local sliderPos = math.clamp(mouse.X - jpSlider.AbsolutePosition.X, 0, jpSlider.AbsoluteSize.X)
+                local percent = sliderPos / jpSlider.AbsoluteSize.X
+                local value = math.floor(50 + (percent * 150))
+                player.Character.Humanoid.JumpPower = value
+                jpSlider:FindFirstChild("Value").Text = tostring(value)
+            end
         end)
         
-        createToggle("Anti Taze", "⚡", category, false, function(v)
-            currentToggles.AntiTaze = v
-            -- Implement anti taze logic
+        local release
+        release = UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                sliding = false
+                connection:Disconnect()
+                release:Disconnect()
+            end
         end)
+    end)
+    
+    -- Toggles
+    local toggles = {
+        "Infinite Jump",
+        "No Ragdoll",
+        "Fly",
+        "Noclip"
+    }
+    
+    for i, feature in ipairs(toggles) do
+        local toggle = createToggle(feature, UDim2.new(0, 200, 0, 130 + (i-1) * 35))
+        toggle.Parent = frame
         
-        createToggle("Noclip", "🔲", category, false, function(v)
-            currentToggles.Noclip = v
-            -- Implement noclip logic
-        end)
-        
-        createToggle("Fly", "🕊️", category, false, function(v)
-            currentToggles.Fly = v
-            -- Implement fly logic
-        end)
-        
-    elseif category == "AUTO FARM" then
-        createToggle("Auto Rob Bank", "🏦", category, false, function(v) currentToggles.AutoBank = v end)
-        createToggle("Auto Rob Jewelry", "💎", category, false, function(v) currentToggles.AutoJewelry = v end)
-        createToggle("Auto Rob Museum", "🏛️", category, false, function(v) currentToggles.AutoMuseum = v end)
-        createToggle("Auto Rob Cargo Train", "🚂", category, false, function(v) currentToggles.AutoCargo = v end)
-        createToggle("Auto Rob Passenger Train", "🚆", category, false, function(v) currentToggles.AutoPassenger = v end)
-        createToggle("Auto Collect Airdrops", "📦", category, false, function(v) currentToggles.AutoAirdrops = v end)
-        createToggle("Auto Escape Prison", "🔓", category, false, function(v) currentToggles.AutoEscape = v end)
-        createToggle("Smart Robbery Loop", "🔄", category, false, function(v) currentToggles.SmartLoop = v end)
-        
-    elseif category == "VEHICLE" then
-        createSlider("Car Speed", "🚗", 50, 500, 150, "{value}", function(v)
-            currentToggles.CarSpeed = v
-            -- Implement car speed
-        end)
-        
-        createToggle("Infinite Nitro", "💨", category, false, function(v) currentToggles.InfiniteNitro = v end)
-        createToggle("Fly Car", "🛸", category, false, function(v) currentToggles.FlyCar = v end)
-        createToggle("Vehicle Teleport", "📡", category, false, function(v) currentToggles.VehicleTeleport = v end)
-        createToggle("Spawn Anywhere", "✨", category, false, function(v) currentToggles.SpawnAnywhere = v end)
-        createSlider("Suspension", "🔧", 0, 10, 5, "{value}", function(v) currentToggles.Suspension = v end)
-        createToggle("No Cooldown", "⏱️", category, false, function(v) currentToggles.NoCooldown = v end)
-        
-    elseif category == "TELEPORTS" then
-        local teleportLocations = {
-            {"Prison", CFrame.new(480, 20, 2450)},
-            {"Bank", CFrame.new(260, 20, 200)},
-            {"Jewelry Store", CFrame.new(-630, 20, 290)},
-            {"Museum", CFrame.new(180, 20, -90)},
-            {"Power Plant", CFrame.new(710, 30, 500)},
-            {"Criminal Base", CFrame.new(-950, 25, 650)},
-            {"Military Base", CFrame.new(2000, 30, 1300)},
-            {"Gun Shop", CFrame.new(520, 20, 50)},
-            {"Airport", CFrame.new(1650, 30, 200)}
-        }
-        
-        for _, loc in ipairs(teleportLocations) do
-            local teleportFrame = Instance.new("Frame")
-            teleportFrame.Size = UDim2.new(1, -10, 0, 45)
-            teleportFrame.BackgroundColor3 = Color3.fromRGB(20, 23, 30)
-            teleportFrame.BackgroundTransparency = 0.3
-            teleportFrame.BorderSizePixel = 0
-            teleportFrame.Parent = ContentFrame
-            
-            local UICorner = Instance.new("UICorner")
-            UICorner.CornerRadius = UDim.new(0, 6)
-            UICorner.Parent = teleportFrame
-            
-            local NameLabel = Instance.new("TextLabel")
-            NameLabel.Size = UDim2.new(0, 200, 1, 0)
-            NameLabel.Position = UDim2.new(0, 15, 0, 0)
-            NameLabel.BackgroundTransparency = 1
-            NameLabel.Text = loc[1]
-            NameLabel.Font = Enum.Font.Gotham
-            NameLabel.TextSize = 14
-            NameLabel.TextColor3 = Color3.fromRGB(220, 230, 255)
-            NameLabel.TextXAlignment = Enum.TextXAlignment.Left
-            NameLabel.Parent = teleportFrame
-            
-            local TeleportButton = Instance.new("TextButton")
-            TeleportButton.Size = UDim2.new(0, 70, 0, 30)
-            TeleportButton.Position = UDim2.new(1, -85, 0.5, -15)
-            TeleportButton.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-            TeleportButton.Text = "TP"
-            TeleportButton.Font = Enum.Font.GothamBold
-            TeleportButton.TextSize = 12
-            TeleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-            TeleportButton.AutoButtonColor = false
-            
-            local TPButtonCorner = Instance.new("UICorner")
-            TPButtonCorner.CornerRadius = UDim.new(0, 4)
-            TPButtonCorner.Parent = TeleportButton
-            
-            TeleportButton.MouseButton1Click:Connect(function()
-                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    player.Character.HumanoidRootPart.CFrame = loc[2]
-                end
+        if feature == "Infinite Jump" then
+            toggle:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
+                local infiniteJumpEnabled = false
+                UserInputService.JumpRequest:Connect(function()
+                    if toggle:FindFirstChild("ToggleBtn").BackgroundColor3 == Color3.fromRGB(0, 255, 0) and player.Character and player.Character:FindFirstChild("Humanoid") then
+                        player.Character.Humanoid:ChangeState("Jumping")
+                    end
+                end)
             end)
+        elseif feature == "Fly" then
+            toggle:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
+                spawn(function()
+                    while toggle:FindFirstChild("ToggleBtn").BackgroundColor3 == Color3.fromRGB(0, 255, 0) do
+                        -- Fly logic
+                        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                            local root = player.Character.HumanoidRootPart
+                            local moveDirection = Vector3.new()
+                            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + camera.CFrame.LookVector end
+                            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - camera.CFrame.LookVector end
+                            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - camera.CFrame.RightVector end
+                            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + camera.CFrame.RightVector end
+                            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
+                            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDirection = moveDirection - Vector3.new(0, 1, 0) end
+                            
+                            if moveDirection.Magnitude > 0 then
+                                root.Velocity = moveDirection.Unit * 50
+                            else
+                                root.Velocity = Vector3.new()
+                            end
+                        end
+                        RunService.Heartbeat:Wait()
+                    end
+                end)
+            end)
+        elseif feature == "Noclip" then
+            toggle:FindFirstChildOfClass("TextButton").MouseButton1Click:Connect(function()
+                spawn(function()
+                    while toggle:FindFirstChild("ToggleBtn").BackgroundColor3 == Color3.fromRGB(0, 255, 0) do
+                        if player.Character then
+                            for _, part in ipairs(player.Character:GetDescendants()) do
+                                if part:IsA("BasePart") then
+                                    part.CanCollide = false
+                                end
+                            end
+                        end
+                        RunService.Heartbeat:Wait()
+                    end
+                end)
+            end)
+        end
+    end
+    
+    return frame
+end
+
+-- Create Credits Page
+function createCreditsPage()
+    local frame = Instance.new("Frame")
+    frame.BackgroundTransparency = 1
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    
+    local credits = {
+        {text = "Script Creator:", value = "NovaBreakNewton"},
+        {text = "Script Name:", value = "NebulaX v0.1"},
+        {text = "Version:", value = "0.1 Alpha"},
+        {text = "Special Thanks:", value = "All Beta Testers"},
+        {text = "Discord:", value = "discord.gg/novabreak"}
+    }
+    
+    for i, credit in ipairs(credits) do
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -20, 0, 30)
+        label.Position = UDim2.new(0, 10, 0, 20 + (i-1) * 35)
+        label.BackgroundTransparency = 1
+        label.Text = credit.text .. " " .. credit.value
+        label.TextColor3 = i == 1 and Color3.fromRGB(0, 255, 255) or Color3.fromRGB(255, 255, 255)
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Font = i == 1 and Enum.Font.GothamBold or Enum.Font.Gotham
+        label.TextSize = i == 1 and 18 or 14
+        label.Parent = frame
+    end
+    
+    local versionBox = Instance.new("Frame")
+    versionBox.Size = UDim2.new(1, -20, 0, 100)
+    versionBox.Position = UDim2.new(0, 10, 0, 180)
+    versionBox.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    versionBox.Parent = frame
+    
+    local boxCorner = Instance.new("UICorner")
+    boxCorner.CornerRadius = UDim.new(0, 8)
+    boxCorner.Parent = versionBox
+    
+    local versionLabel = Instance.new("TextLabel")
+    versionLabel.Size = UDim2.new(1, -10, 1, -10)
+    versionLabel.Position = UDim2.new(0, 5, 0, 5)
+    versionLabel.BackgroundTransparency = 1
+    versionLabel.Text = "Version Updates:\n\n- Initial release\n- Added all categories\n- Insert key toggle\n- UI Framework"
+    versionLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    versionLabel.TextXAlignment = Enum.TextXAlignment.Left
+    versionLabel.TextYAlignment = Enum.TextYAlignment.Top
+    versionLabel.Font = Enum.Font.Gotham
+    versionLabel.TextSize = 12
+    versionLabel.Parent = versionBox
+    
+    return frame
+end
+
+-- Helper function to create toggle buttons
+function createToggle(name, position)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 250, 0, 30)
+    frame.Position = position
+    frame.BackgroundTransparency = 1
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 150, 1, 0)
+    label.Position = UDim2.new(0, 0, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 14
+    label.Parent = frame
+    
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Name = "ToggleBtn"
+    toggleBtn.Size = UDim2.new(0, 50, 0, 25)
+    toggleBtn.Position = UDim2.new(0, 160, 0, 2.5)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    toggleBtn.Text = "OFF"
+    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleBtn.Font = Enum.Font.GothamBold
+    toggleBtn.TextSize = 12
+    toggleBtn.Parent = frame
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 4)
+    btnCorner.Parent = toggleBtn
+    
+    toggleBtn.MouseButton1Click:Connect(function()
+        if toggleBtn.BackgroundColor3 == Color3.fromRGB(255, 50, 50) then
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 255, 50)
+            toggleBtn.Text = "ON"
+        else
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+            toggleBtn.Text = "OFF"
+        end
+    end)
+    
+    return frame
+end
+
+-- Helper function to create sliders
+function createSlider(position, min, max, default)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 200, 0, 25)
+    frame.Position = position
+    frame.BackgroundTransparency = 1
+    
+    local sliderBg = Instance.new("Frame")
+    sliderBg.Size = UDim2.new(0, 150, 0, 5)
+    sliderBg.Position = UDim2.new(0, 0, 0.5, -2.5)
+    sliderBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    sliderBg.Parent = frame
+    
+    local sliderFill = Instance.new("Frame")
+    sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    sliderFill.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+    sliderFill.Parent = sliderBg
+    
+    local sliderBtn = Instance.new("TextButton")
+    sliderBtn.Name = "SliderButton"
+    sliderBtn.Size = UDim2.new(0, 10, 0, 10)
+    sliderBtn.Position = UDim2.new((default - min) / (max - min), -5, 0.5, -5)
+    sliderBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    sliderBtn.Text = ""
+    sliderBtn.Parent = sliderBg
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0.5, 0)
+    btnCorner.Parent = sliderBtn
+    
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Name = "Value"
+    valueLabel.Size = UDim2.new(0, 40, 1, 0)
+    valueLabel.Position = UDim2.new(0, 160, 0, 0)
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Text = tostring(default)
+    valueLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
+    valueLabel.Font = Enum.Font.GothamBold
+    valueLabel.TextSize = 14
+    valueLabel.Parent = frame
+    
+    return frame
+end
+
+-- Function to get closest player for aimbot
+function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    
+    for _, otherPlayer in ipairs(Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("Head") then
+            local headPos = otherPlayer.Character.Head.Position
+            local screenPos, onScreen = camera:WorldToScreenPoint(headPos)
             
-            TeleportButton.Parent = teleportFrame
-        end
-        
-    elseif category == "COMBAT" then
-        createToggle("Silent Aim", "🎯", category, false, function(v) currentToggles.SilentAim = v end)
-        createToggle("Aimbot", "⚡", category, false, function(v) currentToggles.Aimbot = v end)
-        createToggle("No Recoil", "🔫", category, false, function(v) currentToggles.NoRecoil = v end)
-        createToggle("Instant Reload", "🔄", category, false, function(v) currentToggles.InstantReload = v end)
-        createToggle("Infinite Ammo", "∞", category, false, function(v) currentToggles.InfiniteAmmo = v end)
-        createSlider("Hitbox Size", "📏", 1, 5, 1, "{value}x", function(v) currentToggles.HitboxSize = v end)
-        createToggle("Auto Arrest", "⛓️", category, false, function(v) currentToggles.AutoArrest = v end)
-        
-    elseif category == "ESP" then
-        createToggle("Player ESP", "👥", category, false, function(v) currentToggles.PlayerESP = v end)
-        createToggle("Police ESP", "👮", category, false, function(v) currentToggles.PoliceESP = v end)
-        createToggle("Criminal ESP", "🦹", category, false, function(v) currentToggles.CriminalESP = v end)
-        createToggle("Vehicle ESP", "🚗", category, false, function(v) currentToggles.VehicleESP = v end)
-        createToggle("Airdrop ESP", "📦", category, false, function(v) currentToggles.AirdropESP = v end)
-        createToggle("Robbery ESP", "💰", category, false, function(v) currentToggles.RobberyESP = v end)
-        createToggle("Distance Tracker", "📐", category, false, function(v) currentToggles.DistanceTracker = v end)
-    end
-end
-
--- Create category buttons
-for i, cat in ipairs(categories) do
-    local button = Instance.new("TextButton")
-    button.Name = cat.name.."Btn"
-    button.Size = UDim2.new(0, 100, 0, 35)
-    button.BackgroundColor3 = cat.name == currentCategory and Color3.fromRGB(0, 200, 255) or Color3.fromRGB(30, 35, 50)
-    button.BackgroundTransparency = cat.name == currentCategory and 0 or 0.5
-    button.Text = cat.icon .. " " .. cat.name
-    button.Font = Enum.Font.Gotham
-    button.TextSize = 12
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.AutoButtonColor = false
-    
-    local ButtonCorner = Instance.new("UICorner")
-    ButtonCorner.CornerRadius = UDim.new(0, 4)
-    ButtonCorner.Parent = button
-    
-    button.MouseEnter:Connect(function()
-        if cat.name ~= currentCategory then
-            TweenService:Create(button, TweenInfo.new(0.2), {BackgroundTransparency = 0.2}):Play()
-        end
-    end)
-    
-    button.MouseLeave:Connect(function()
-        if cat.name ~= currentCategory then
-            TweenService:Create(button, TweenInfo.new(0.2), {BackgroundTransparency = 0.5}):Play()
-        end
-    end)
-    
-    button.MouseButton1Click:Connect(function()
-        for _, btn in ipairs(categoryButtons) do
-            TweenService:Create(btn, TweenInfo.new(0.2), {
-                BackgroundColor3 = Color3.fromRGB(30, 35, 50),
-                BackgroundTransparency = 0.5
-            }):Play()
-        end
-        
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(0, 200, 255),
-            BackgroundTransparency = 0
-        }):Play()
-        
-        currentCategory = cat.name
-        loadCategory(cat.name)
-    end)
-    
-    button.Parent = CategoryFrame
-    table.insert(categoryButtons, button)
-end
-
--- Assemble GUI
-TitleBar.Parent = MainFrame
-CategoryFrame.Parent = MainFrame
-ContentFrame.Parent = MainFrame
-MainFrame.Parent = ShadowHolder
-
--- Animation variables
-local isOpen = false
-local loadingDots = ""
-
--- Loading animation
-local LoadingFrame = Instance.new("Frame")
-LoadingFrame.Name = "LoadingFrame"
-LoadingFrame.Size = UDim2.new(0, 100, 0, 30)
-LoadingFrame.Position = UDim2.new(0.5, -50, 0.5, -15)
-LoadingFrame.BackgroundTransparency = 1
-LoadingFrame.Parent = NebulaX
-
-local LoadingText = Instance.new("TextLabel")
-LoadingText.Size = UDim2.new(1, 0, 1, 0)
-LoadingText.BackgroundTransparency = 1
-LoadingText.Text = "NEBULA X LOADING"
-LoadingText.Font = Enum.Font.GothamBold
-LoadingText.TextSize = 14
-LoadingText.TextColor3 = Color3.fromRGB(0, 200, 255)
-LoadingText.TextStrokeTransparency = 0.5
-LoadingText.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
-LoadingText.Parent = LoadingFrame
-
-local LoadingDots = Instance.new("TextLabel")
-LoadingDots.Size = UDim2.new(1, 0, 1, 20)
-LoadingDots.Position = UDim2.new(0, 0, 0, 20)
-LoadingDots.BackgroundTransparency = 1
-LoadingDots.Text = "..."
-LoadingDots.Font = Enum.Font.GothamBold
-LoadingDots.TextSize = 20
-LoadingDots.TextColor3 = Color3.fromRGB(0, 200, 255)
-LoadingDots.Parent = LoadingFrame
-
--- Loading animation coroutine
-coroutine.wrap(function()
-    while true do
-        for i = 1, 3 do
-            LoadingDots.Text = string.rep(".", i)
-            wait(0.3)
+            if onScreen then
+                local distance = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(screenPos.X, screenPos.Y)).Magnitude
+                if distance < shortestDistance and distance < 200 then
+                    shortestDistance = distance
+                    closestPlayer = otherPlayer
+                end
+            end
         end
     end
-end)()
-
--- Simulate loading
-wait(2)
-
--- Fade out loading
-TweenService:Create(LoadingFrame, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-TweenService:Create(LoadingText, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
-TweenService:Create(LoadingDots, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
-
-wait(0.5)
-LoadingFrame:Destroy()
-
--- Load default category
-loadCategory("CHARACTER")
-
--- Toggle function
-function toggleGUI()
-    isOpen = not isOpen
-    MainFrame.Visible = isOpen
     
-    if isOpen then
-        -- Play open animation
-        for i, shadow in ipairs(shadows) do
-            TweenService:Create(shadow, TweenInfo.new(0.3), {
-                BackgroundTransparency = 0.9 - (i * 0.15)
-            }):Play()
-        end
-        
-        TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0.5, -250, 0.5, -300)
-        }):Play()
-    else
-        -- Play close animation
-        TweenService:Create(MainFrame, TweenInfo.new(0.3), {
-            Position = UDim2.new(0.5, -250, 0.5, -250)
-        }):Play()
-        
-        for i, shadow in ipairs(shadows) do
-            TweenService:Create(shadow, TweenInfo.new(0.2), {
-                BackgroundTransparency = 1
-            }):Play()
-        end
-    end
+    return closestPlayer
 end
 
--- Keybind
+-- Initialize GUI
+local guiObject, mainFrame = createGUI()
+
+-- Insert key toggle
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Enum.KeyCode.Insert then
-        toggleGUI()
+        guiEnabled = not guiEnabled
+        mainFrame.Visible = guiEnabled
     end
 end)
 
--- Make GUI draggable
-local dragging = false
-local dragStart = nil
-local startPos = nil
+-- Notification
+local notification = Instance.new("ScreenGui")
+notification.Parent = CoreGui
 
-TitleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
-    end
+local notifyFrame = Instance.new("Frame")
+notifyFrame.Size = UDim2.new(0, 300, 0, 50)
+notifyFrame.Position = UDim2.new(0.5, -150, 0, -60)
+notifyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+notifyFrame.Parent = notification
+
+local notifyCorner = Instance.new("UICorner")
+notifyCorner.CornerRadius = UDim.new(0, 8)
+notifyCorner.Parent = notifyFrame
+
+local notifyText = Instance.new("TextLabel")
+notifyText.Size = UDim2.new(1, -20, 1, 0)
+notifyText.Position = UDim2.new(0, 10, 0, 0)
+notifyText.BackgroundTransparency = 1
+notifyText.Text = "NebulaX v0.1 Loaded! Press Insert to open"
+notifyText.TextColor3 = Color3.fromRGB(0, 255, 255)
+notifyText.Font = Enum.Font.Gotham
+notifyText.TextSize = 14
+notifyText.Parent = notifyFrame
+
+-- Animate notification
+local goal = {Position = UDim2.new(0.5, -150, 0, 20)}
+local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local tween = TweenService:Create(notifyFrame, tweenInfo, goal)
+tween:Play()
+
+task.wait(3)
+
+local hideGoal = {Position = UDim2.new(0.5, -150, 0, -60)}
+local hideTween = TweenService:Create(notifyFrame, tweenInfo, hideGoal)
+hideTween:Play()
+
+hideTween.Completed:Connect(function()
+    notification:Destroy()
 end)
 
-TitleBar.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-        
-        -- Update shadows
-        for i, shadow in ipairs(shadows) do
-            shadow.Position = UDim2.new(
-                0.5,
-                -(10 + i) + delta.X,
-                0.5,
-                -(10 + i) + delta.Y
-            )
-        end
-    end
-end)
-
--- Watermark
-local Watermark = Instance.new("TextLabel")
-Watermark.Name = "Watermark"
-Watermark.Size = UDim2.new(0, 200, 0, 30)
-Watermark.Position = UDim2.new(0, 10, 0, 10)
-Watermark.BackgroundTransparency = 0.5
-Watermark.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Watermark.Text = "NEBULA X | LOADED"
-Watermark.Font = Enum.Font.GothamBold
-Watermark.TextSize = 14
-Watermark.TextColor3 = Color3.fromRGB(0, 255, 255)
-Watermark.TextStrokeTransparency = 0.3
-Watermark.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
-
-local WatermarkCorner = Instance.new("UICorner")
-WatermarkCorner.CornerRadius = UDim.new(0, 4)
-WatermarkCorner.Parent = Watermark
-
-Watermark.Parent = NebulaX
-
--- Fade out watermark after 5 seconds
-wait(5)
-TweenService:Create(Watermark, TweenInfo.new(1), {BackgroundTransparency = 1, TextTransparency = 1}):Play()
-wait(1)
-Watermark:Destroy()
-
-print("NebulaX v0.1 successfully loaded! Press INSERT to open the menu.")
+print("NebulaX v0.1 Loaded Successfully!")
+print("Press Insert to open/close the GUI")
+print("Created by NovaBreakNewton")
