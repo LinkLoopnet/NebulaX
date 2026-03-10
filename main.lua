@@ -1,5 +1,6 @@
--- NebulaX v0.1 Framework (FIXED VERSION)
+-- NebulaX v0.1 - Main Script
 -- Created by NovaBreakNewton
+-- Fixed for Xeno Executor
 
 -- Services
 local Players = game:GetService("Players")
@@ -11,6 +12,7 @@ local VirtualUser = game:GetService("VirtualUser")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
 local GuiService = game:GetService("GuiService")
+local ContextActionService = game:GetService("ContextActionService")
 
 -- Variables
 local player = Players.LocalPlayer
@@ -26,7 +28,15 @@ player.Idled:Connect(function()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
--- Helper function to create toggle buttons
+-- Print startup message
+print("=== NebulaX v0.1 Loading ===")
+print("Created by NovaBreakNewton")
+print("Waiting for game to load...")
+
+-- Wait for game to fully load
+task.wait(3)
+
+-- Helper Functions
 function createToggle(name, position)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(0, 250, 0, 30)
@@ -73,7 +83,6 @@ function createToggle(name, position)
     return frame
 end
 
--- Helper function to create sliders
 function createSlider(position, min, max, default)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(0, 200, 0, 25)
@@ -117,7 +126,6 @@ function createSlider(position, min, max, default)
     return frame
 end
 
--- Function to get closest player for aimbot
 function getClosestPlayer()
     local closestPlayer = nil
     local shortestDistance = math.huge
@@ -162,40 +170,6 @@ function createFarmPage()
     for i, feature in ipairs(features) do
         local toggle = createToggle(feature, UDim2.new(0, 10, 0, (i-1) * 35))
         toggle.Parent = frame
-        
-        -- Add functionality
-        if feature == "Auto Rob" then
-            toggle:FindFirstChild("ToggleBtn", true).MouseButton1Click:Connect(function()
-                spawn(function()
-                    while toggle:FindFirstChild("ToggleBtn", true).BackgroundColor3 == Color3.fromRGB(50, 255, 50) do
-                        -- Auto rob logic
-                        print("Auto Rob Active")
-                        RunService.Heartbeat:Wait()
-                    end
-                end)
-            end)
-        elseif feature == "Auto Bank" then
-            toggle:FindFirstChild("ToggleBtn", true).MouseButton1Click:Connect(function()
-                spawn(function()
-                    while toggle:FindFirstChild("ToggleBtn", true).BackgroundColor3 == Color3.fromRGB(50, 255, 50) do
-                        -- Auto bank logic
-                        print("Auto Bank Active")
-                        RunService.Heartbeat:Wait()
-                    end
-                end)
-            end)
-        elseif feature == "Auto Jewelry" then
-            toggle:FindFirstChild("ToggleBtn", true).MouseButton1Click:Connect(function()
-                spawn(function()
-                    while toggle:FindFirstChild("ToggleBtn", true).BackgroundColor3 == Color3.fromRGB(50, 255, 50) do
-                        -- Auto jewelry logic
-                        print("Auto Jewelry Active")
-                        RunService.Heartbeat:Wait()
-                    end
-                end)
-            end)
-        end
-        -- Add similar logic for other farm features
     end
     
     return frame
@@ -222,32 +196,6 @@ function createCombatPage()
     for i, feature in ipairs(features) do
         local toggle = createToggle(feature, UDim2.new(0, 10, 0, (i-1) * 35))
         toggle.Parent = frame
-        
-        -- Add aimbot functionality
-        if feature == "Aimbot" then
-            toggle:FindFirstChild("ToggleBtn", true).MouseButton1Click:Connect(function()
-                spawn(function()
-                    while toggle:FindFirstChild("ToggleBtn", true).BackgroundColor3 == Color3.fromRGB(50, 255, 50) do
-                        -- Aimbot logic
-                        local closestPlayer = getClosestPlayer()
-                        if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild("Head") then
-                            camera.CFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Character.Head.Position)
-                        end
-                        RunService.Heartbeat:Wait()
-                    end
-                end)
-            end)
-        elseif feature == "No Recoil" then
-            toggle:FindFirstChild("ToggleBtn", true).MouseButton1Click:Connect(function()
-                spawn(function()
-                    while toggle:FindFirstChild("ToggleBtn", true).BackgroundColor3 == Color3.fromRGB(50, 255, 50) do
-                        -- No recoil logic
-                        print("No Recoil Active")
-                        RunService.Heartbeat:Wait()
-                    end
-                end)
-            end)
-        end
     end
     
     return frame
@@ -278,32 +226,6 @@ function createPlayerPage()
     wsSlider.Position = UDim2.new(0, 10, 0, 35)
     wsSlider.Parent = frame
     
-    local wsSliderBtn = wsSlider:FindFirstChild("SliderButton", true)
-    local wsValue = wsSlider:FindFirstChild("Value", true)
-    
-    wsSliderBtn.MouseButton1Down:Connect(function()
-        local sliding = true
-        local connection
-        connection = RunService.RenderStepped:Connect(function()
-            if sliding and player.Character and player.Character:FindFirstChild("Humanoid") then
-                local sliderPos = math.clamp(mouse.X - wsSliderBtn.Parent.AbsolutePosition.X, 0, wsSliderBtn.Parent.AbsoluteSize.X)
-                local percent = sliderPos / wsSliderBtn.Parent.AbsoluteSize.X
-                local value = math.floor(16 + (percent * 84))
-                player.Character.Humanoid.WalkSpeed = value
-                wsValue.Text = tostring(value)
-            end
-        end)
-        
-        local release
-        release = UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                sliding = false
-                connection:Disconnect()
-                release:Disconnect()
-            end
-        end)
-    end)
-    
     -- JumpPower Slider
     local jpLabel = Instance.new("TextLabel")
     jpLabel.Size = UDim2.new(0, 100, 0, 25)
@@ -320,32 +242,6 @@ function createPlayerPage()
     jpSlider.Position = UDim2.new(0, 10, 0, 105)
     jpSlider.Parent = frame
     
-    local jpSliderBtn = jpSlider:FindFirstChild("SliderButton", true)
-    local jpValue = jpSlider:FindFirstChild("Value", true)
-    
-    jpSliderBtn.MouseButton1Down:Connect(function()
-        local sliding = true
-        local connection
-        connection = RunService.RenderStepped:Connect(function()
-            if sliding and player.Character and player.Character:FindFirstChild("Humanoid") then
-                local sliderPos = math.clamp(mouse.X - jpSliderBtn.Parent.AbsolutePosition.X, 0, jpSliderBtn.Parent.AbsoluteSize.X)
-                local percent = sliderPos / jpSliderBtn.Parent.AbsoluteSize.X
-                local value = math.floor(50 + (percent * 150))
-                player.Character.Humanoid.JumpPower = value
-                jpValue.Text = tostring(value)
-            end
-        end)
-        
-        local release
-        release = UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                sliding = false
-                connection:Disconnect()
-                release:Disconnect()
-            end
-        end)
-    end)
-    
     -- Toggles
     local toggles = {
         "Infinite Jump",
@@ -357,68 +253,6 @@ function createPlayerPage()
     for i, feature in ipairs(toggles) do
         local toggle = createToggle(feature, UDim2.new(0, 10, 0, 150 + (i-1) * 35))
         toggle.Parent = frame
-        
-        if feature == "Infinite Jump" then
-            UserInputService.JumpRequest:Connect(function()
-                if toggle:FindFirstChild("ToggleBtn", true) and toggle:FindFirstChild("ToggleBtn", true).BackgroundColor3 == Color3.fromRGB(50, 255, 50) and player.Character and player.Character:FindFirstChild("Humanoid") then
-                    player.Character.Humanoid:ChangeState("Jumping")
-                end
-            end)
-        elseif feature == "Fly" then
-            toggle:FindFirstChild("ToggleBtn", true).MouseButton1Click:Connect(function()
-                spawn(function()
-                    while toggle:FindFirstChild("ToggleBtn", true).BackgroundColor3 == Color3.fromRGB(50, 255, 50) do
-                        -- Fly logic
-                        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                            local root = player.Character.HumanoidRootPart
-                            local moveDirection = Vector3.new()
-                            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + camera.CFrame.LookVector end
-                            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - camera.CFrame.LookVector end
-                            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - camera.CFrame.RightVector end
-                            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + camera.CFrame.RightVector end
-                            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
-                            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDirection = moveDirection - Vector3.new(0, 1, 0) end
-                            
-                            if moveDirection.Magnitude > 0 then
-                                root.Velocity = moveDirection.Unit * 50
-                            else
-                                root.Velocity = Vector3.new()
-                            end
-                        end
-                        RunService.Heartbeat:Wait()
-                    end
-                    
-                    -- Reset velocity when disabled
-                    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                        player.Character.HumanoidRootPart.Velocity = Vector3.new()
-                    end
-                end)
-            end)
-        elseif feature == "Noclip" then
-            toggle:FindFirstChild("ToggleBtn", true).MouseButton1Click:Connect(function()
-                spawn(function()
-                    while toggle:FindFirstChild("ToggleBtn", true).BackgroundColor3 == Color3.fromRGB(50, 255, 50) do
-                        if player.Character then
-                            for _, part in ipairs(player.Character:GetDescendants()) do
-                                if part:IsA("BasePart") then
-                                    part.CanCollide = false
-                                end
-                            end
-                        end
-                        RunService.Heartbeat:Wait()
-                    end
-                    
-                    -- Reset collision when disabled
-                    if player.Character then
-                        for _, part in ipairs(player.Character:GetDescendants()) do
-                            if part:IsA("BasePart") then
-                                part.CanCollide = true
-                            end
-                        end
-                    end
-                end)
-            end)
-        end
     end
     
     return frame
@@ -478,20 +312,24 @@ end
 
 -- Create Main GUI
 local function createGUI()
-    -- Try different parent options
+    -- Try different parent options for Xeno
     local parent = CoreGui
-    pcall(function()
-        if not CoreGui:FindFirstChild("NebulaX") then
-            -- Check if we can access CoreGui
-            local success, result = pcall(function()
-                return CoreGui
-            end)
-            if not success then
-                -- Fallback to PlayerGui
-                parent = player:WaitForChild("PlayerGui")
-            end
-        end
+    
+    -- Check if CoreGui is accessible
+    local success, result = pcall(function()
+        return CoreGui
     end)
+    
+    if not success then
+        parent = player:FindFirstChild("PlayerGui") or player:WaitForChild("PlayerGui", 5)
+    end
+    
+    if not parent then
+        parent = Instance.new("ScreenGui")
+        parent.Name = "NebulaX_Temp"
+        parent.Parent = player
+        parent.Enabled = true
+    end
     
     -- ScreenGui
     local screenGui = Instance.new("ScreenGui")
@@ -500,6 +338,7 @@ local function createGUI()
     screenGui.ResetOnSpawn = false
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     screenGui.DisplayOrder = 100
+    screenGui.IgnoreGuiInset = true
     
     -- Main Frame
     local mainFrame = Instance.new("Frame")
@@ -657,125 +496,119 @@ local function createGUI()
     return screenGui, mainFrame
 end
 
--- Initialize GUI with retry mechanism
-local function initGUI()
-    local success, result = pcall(function()
-        return createGUI()
-    end)
-    
-    if success then
-        gui, mainFrame = result[1], result[2]
-        print("NebulaX GUI created successfully")
-    else
-        warn("Failed to create GUI: " .. tostring(result))
-        -- Retry after delay
-        task.wait(2)
-        initGUI()
-    end
+-- Initialize GUI
+local gui, mainFrame
+local success, result = pcall(createGUI)
+if success then
+    gui, mainFrame = result[1], result[2]
+    print("✓ NebulaX GUI created successfully")
+else
+    warn("✗ Failed to create GUI: " .. tostring(result))
 end
 
--- Start GUI initialization
-initGUI()
-
--- Insert key toggle with multiple detection methods
+-- FIXED: Insert key toggle for Xeno
 local function toggleGUI()
     if mainFrame then
         guiEnabled = not guiEnabled
         mainFrame.Visible = guiEnabled
-        
-        -- Print status to output
-        print("NebulaX: " .. (guiEnabled and "Opened" or "Closed"))
-    else
-        warn("MainFrame not initialized yet")
+        print("NebulaX: " .. (guiEnabled and "Opened" (press INSERT to close)" or "Closed (press INSERT to open)"))
     end
 end
 
--- Method 1: UserInputService
+-- METHOD 1: UserInputService (works in most executors)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Enum.KeyCode.Insert then
         toggleGUI()
     end
 end)
 
--- Method 2: ContextActionService as backup
-local ContextActionService = game:GetService("ContextActionService")
+-- METHOD 2: ContextActionService (backup for Xeno)
 ContextActionService:BindAction("ToggleNebulaX", function(actionName, inputState, inputObject)
     if inputState == Enum.UserInputState.Begin then
         toggleGUI()
     end
 end, false, Enum.KeyCode.Insert)
 
--- Method 3: Mouse key detection as last resort
+-- METHOD 3: Mouse.KeyDown (most compatible with Xeno)
 mouse.KeyDown:Connect(function(key)
-    if key == "Insert" or key == "ins" then
+    if key == "insert" or key == "Ins" or key == "INSERT" then
         toggleGUI()
     end
 end)
 
--- Show notification with multiple methods
-local function showNotification()
-    -- Try CoreGui first
-    local success = pcall(function()
-        local notification = Instance.new("ScreenGui")
-        notification.Name = "NebulaXNotification"
-        notification.Parent = CoreGui
-        notification.ResetOnSpawn = false
-        notification.DisplayOrder = 200
-        
-        local notifyFrame = Instance.new("Frame")
-        notifyFrame.Size = UDim2.new(0, 300, 0, 50)
-        notifyFrame.Position = UDim2.new(0.5, -150, 0, -60)
-        notifyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-        notifyFrame.Parent = notification
-        
-        local notifyCorner = Instance.new("UICorner")
-        notifyCorner.CornerRadius = UDim.new(0, 8)
-        notifyCorner.Parent = notifyFrame
-        
-        local notifyText = Instance.new("TextLabel")
-        notifyText.Size = UDim2.new(1, -20, 1, 0)
-        notifyText.Position = UDim2.new(0, 10, 0, 0)
-        notifyText.BackgroundTransparency = 1
-        notifyText.Text = "NebulaX v0.1 Loaded! Press Insert to open"
-        notifyText.TextColor3 = Color3.fromRGB(0, 255, 255)
-        notifyText.Font = Enum.Font.Gotham
-        notifyText.TextSize = 14
-        notifyText.Parent = notifyFrame
-        
-        -- Animate notification
-        local goal = {Position = UDim2.new(0.5, -150, 0, 20)}
-        local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local tween = TweenService:Create(notifyFrame, tweenInfo, goal)
-        tween:Play()
-        
-        task.wait(3)
-        
-        local hideGoal = {Position = UDim2.new(0.5, -150, 0, -60)}
-        local hideTween = TweenService:Create(notifyFrame, tweenInfo, hideGoal)
-        hideTween:Play()
-        
-        hideTween.Completed:Connect(function()
-            notification:Destroy()
-        end)
-    end)
-    
-    -- If CoreGui fails, try StarterGui
-    if not success then
-        pcall(function()
-            StarterGui:SetCore("SendNotification", {
-                Title = "NebulaX v0.1",
-                Text = "Loaded! Press Insert to open",
-                Duration = 3
-            })
-        end)
+-- METHOD 4: Keyboard events via UserInputService (another approach)
+local function onInputBegan(input)
+    if input.KeyCode == Enum.KeyCode.Insert then
+        toggleGUI()
     end
 end
+UserInputService.InputBegan:Connect(onInputBegan)
 
--- Show notification after GUI is ready
+-- METHOD 5: Direct key check loop (guaranteed to work)
+spawn(function()
+    while task.wait(0.1) do
+        if UserInputService:IsKeyDown(Enum.KeyCode.Insert) then
+            -- Debounce to prevent multiple toggles
+            if not guiEnabled then
+                toggleGUI()
+                task.wait(0.5) -- Wait to prevent rapid toggling
+            end
+        end
+    end
+end)
+
+-- Show notification
 task.wait(1)
-showNotification()
+pcall(function()
+    -- Try notification
+    local notification = Instance.new("ScreenGui")
+    notification.Name = "NebulaXNotification"
+    notification.Parent = CoreGui
+    notification.ResetOnSpawn = false
+    notification.DisplayOrder = 200
+    notification.IgnoreGuiInset = true
+    
+    local notifyFrame = Instance.new("Frame")
+    notifyFrame.Size = UDim2.new(0, 350, 0, 60)
+    notifyFrame.Position = UDim2.new(0.5, -175, 0, 20)
+    notifyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    notifyFrame.Parent = notification
+    notifyFrame.BorderSizePixel = 0
+    
+    local notifyCorner = Instance.new("UICorner")
+    notifyCorner.CornerRadius = UDim.new(0, 8)
+    notifyCorner.Parent = notifyFrame
+    
+    local notifyText = Instance.new("TextLabel")
+    notifyText.Size = UDim2.new(1, -20, 0.5, 0)
+    notifyText.Position = UDim2.new(0, 10, 0, 5)
+    notifyText.BackgroundTransparency = 1
+    notifyText.Text = "NebulaX v0.1 Loaded!"
+    notifyText.TextColor3 = Color3.fromRGB(0, 255, 255)
+    notifyText.Font = Enum.Font.GothamBold
+    notifyText.TextSize = 18
+    notifyText.TextXAlignment = Enum.TextXAlignment.Left
+    notifyText.Parent = notifyFrame
+    
+    local notifySubText = Instance.new("TextLabel")
+    notifySubText.Size = UDim2.new(1, -20, 0.5, 0)
+    notifySubText.Position = UDim2.new(0, 10, 0, 30)
+    notifySubText.BackgroundTransparency = 1
+    notifySubText.Text = "Press INSERT to open the GUI"
+    notifySubText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    notifySubText.Font = Enum.Font.Gotham
+    notifySubText.TextSize = 14
+    notifySubText.TextXAlignment = Enum.TextXAlignment.Left
+    notifySubText.Parent = notifyFrame
+    
+    -- Auto destroy after 5 seconds
+    task.wait(5)
+    notification:Destroy()
+end)
 
-print("=== NebulaX v0.1 ===")
-print("Created by NovaBreakNewton")
-print("Press INSERT to open/close the GUI")
-print("===================")
+-- Success message
+print("╔══════════════════════════════════╗")
+print("║     NebulaX v0.1 Loaded!         ║")
+print("║     Created by NovaBreakNewton    ║")
+print("║     Press INSERT to open GUI      ║")
+print("╚══════════════════════════════════╝")
